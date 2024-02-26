@@ -105,3 +105,70 @@ describe("Stream.enumerate()", () => {
         expect([...s]).toEqual([0, 2, 6, 12, 20, 30]);
     })
 })
+
+describe("Stream.zip()", () => {
+    let numbers = [1, 2, 3, 4, 5, 6];
+    let letters = ["a", "b", "c", "d", "e", "f"];
+
+    it("should zip the numbers and letters", () => {
+        let s = Stream.zip2(numbers, letters);
+        expect([...s])
+            .toEqual([[1, "a"], [2, "b"], [3, "c"], [4, "d"], [5, "e"], [6, "f"]]);
+    })
+
+    it("should be chainable", () => {
+        let s = Stream.zip2(numbers, letters)
+            .map(([n, l]) => n + l);
+        expect([...s]).toEqual(["1a", "2b", "3c", "4d", "5e", "6f"]);
+    })
+})
+
+describe("Stream.zip3()", () => {
+    let numbers = [1, 2, 3, 4, 5, 6];
+    let letters = ["a", "b", "c", "d", "e", "f"];
+    let symbols = [true, false, true, false, true, false];
+
+    it("should zip the numbers, letters and symbols", () => {
+        let s = Stream.zip3(numbers, letters, symbols);
+        expect([...s])
+            .toEqual([
+                [1, "a", true],
+                [2, "b", false],
+                [3, "c", true],
+                [4, "d", false],
+                [5, "e", true],
+                [6, "f", false]
+            ]);
+    })
+})
+
+describe("Stream.zip_n()", () => {
+    let numbers1 = [1, 2, 3, 4, 5, 6];
+    let numbers2 = [7, 8, 9, 10, 11, 12];
+    let numbers3 = [13, 14, 15, 16, 17, 18];
+    let numbers4 = [19, 20, 21, 22, 23, 24];
+
+    it("should zip 4 iterables", () => {
+        const s0 = Stream.zip_n(numbers1, numbers2, numbers3, numbers4);
+        const s1 = s0.map(([a, b, c, d]) => a + b + c + d);
+        expect([...s1]).toEqual([40, 44, 48, 52, 56, 60]);
+    })
+})
+
+describe("Stream.chain()", () => {
+    let numbers = [1, 2, 3];
+    let letters = ["a", "b", "c"];
+
+    it("should chain the numbers and letters", () => {
+        let s = Stream.from(numbers)
+            .chain(letters);
+        expect([...s]).toEqual([1, 2, 3, "a", "b", "c"]);
+    })
+
+    it("should be chainable", () => {
+        let s = Stream.from(numbers)
+            .chain(letters)
+            .map(x => x.toString());
+        expect([...s]).toEqual(["1", "2", "3", "a", "b", "c"]);
+    })
+})

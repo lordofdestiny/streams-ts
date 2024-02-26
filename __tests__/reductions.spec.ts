@@ -1,4 +1,4 @@
-import { EmptyStreamReductionError} from "~/errors";
+import {EmptyStreamReductionError} from "~/errors";
 import {Stream} from "~/index";
 
 describe("Stream.fold()", () => {
@@ -16,8 +16,7 @@ describe("Stream.fold()", () => {
         let result = s.map(x => x ** 2)
             .fold(0, (acc, x) => acc + x);
         let expected = numbers.map(x => x ** 2).reduce((acc, x) => acc + x, 0);
-        expect(result)
-            .toEqual(numbers.reduce((acc, x) => acc + x * x, 0));
+        expect(result).toEqual(expected);
     });
 })
 
