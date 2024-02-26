@@ -62,3 +62,38 @@ describe("Stream.repeat() + Stream.take()", () => {
         expect(arr.every(x => x === obj)).toBe(true);
     })
 });
+
+describe("Stream.take()", () => {
+    let small_arr = [1, 2, 3];
+
+    it("should take the first 3 numbers", () => {
+        let s = Stream.from(small_arr)
+            .take(3);
+        expect([...s]).toEqual(small_arr);
+    })
+
+    it("should take the first 0 numbers", () => {
+        let s = Stream.from(small_arr)
+            .take(0);
+        expect([...s]).toEqual([]);
+    })
+
+    it("should take all the numbers", () => {
+        let s = Stream.from(small_arr)
+            .take(small_arr.length);
+        expect([...s]).toEqual(small_arr);
+    })
+
+    it("should be chainable", () => {
+        let s = Stream.from(small_arr)
+            .take(2)
+            .take(2);
+        expect([...s]).toEqual([1, 2]);
+    })
+
+    it("should exit if the stream is exhausted", () => {
+        let s = Stream.from(small_arr)
+            .take(100);
+        expect([...s]).toEqual(small_arr);
+    })
+})

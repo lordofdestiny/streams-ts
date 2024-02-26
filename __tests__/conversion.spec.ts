@@ -45,6 +45,7 @@ describe("Stream.toMap()", () => {
 
     it("should be constructable from a complex stream", () => {
         const orgArr: [string, number][] = arr.map(([k, v]) => [v, k]);
+
         const map = new Map(orgArr);
         const result = Stream.from(map)
             .filter(([_, v]) => v % 2 == 0)

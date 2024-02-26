@@ -1,7 +1,11 @@
 import {EmptyStreamReductionError} from "~/errors";
 import {Sequencer} from "~/sequencer";
 
+type Iterableify<T> = { [K in keyof T]: Iterable<T[K]> }
+
+
 export class Stream<T> extends Sequencer<T> {
+
     protected readonly sequencer: Sequencer<T>;
 
     protected constructor(sequencer: Sequencer<T>) {
@@ -61,8 +65,9 @@ export class Stream<T> extends Sequencer<T> {
         const that = this;
         return new Stream(new Sequencer({
                 * [Symbol.iterator]() {
+                    const iterator = that.sequencer.iterator();
                     while (n-- > 0) {
-                        const {value, done} = that.sequencer.iterator().next();
+                        const {value, done} = iterator.next();
                         if (done) return;
                         yield value;
                     }
@@ -113,48 +118,15 @@ export class Stream<T> extends Sequencer<T> {
         return acc;
     }
 
-    public static zip2<T, U>(first: Iterable<T>, second: Iterable<U>): Stream<[T, U]> {
-        return new Stream(new Sequencer({
-            * [Symbol.iterator]() {
-                const a = first[Symbol.iterator]();
-                const b = second[Symbol.iterator]();
-                while (true) {
-                    const {value: x, done: doneX} = a.next();
-                    const {value: y, done: doneY} = b.next();
-                    if (doneX || doneY) return;
-                    yield [x, y];
-                }
-            }
-        }));
-    }
-
-    public static zip3<T, U, V>(first: Iterable<T>, second: Iterable<U>, third: Iterable<V>): Stream<[T, U, V]> {
-        return new Stream(new Sequencer({
-            * [Symbol.iterator]() {
-                const a = first[Symbol.iterator]();
-                const b = second[Symbol.iterator]();
-                const c = third[Symbol.iterator]();
-                while (true) {
-                    const {value: x, done: doneX} = a.next();
-                    const {value: y, done: doneY} = b.next();
-                    const {value: z, done: doneZ} = c.next();
-                    if (doneX || doneY || doneZ) return;
-                    yield [x, y, z];
-                }
-            }
-        }));
-    }
-
-    public static zip_n(...iterables: Iterable<any>[]): Stream<any[]> {
+    public static zip<T extends Array<any>>(...iterables: Iterableify<T>): Stream<T> {
         return new Stream(new Sequencer({
             * [Symbol.iterator]() {
                 const iterators = iterables.map(iterable => iterable[Symbol.iterator]());
                 while (true) {
                     const values = iterators.map(iterator => iterator.next());
                     if (values.some(({done}) => done)) return;
-                    yield values.map(({value}) => value);
-                }
-            }
+                    yield values.map(({value}) => value) as T;
+                }            }
         }));
     }
 
