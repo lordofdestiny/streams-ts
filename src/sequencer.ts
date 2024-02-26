@@ -1,9 +1,13 @@
 export abstract class Sequencer<T> implements Iterable<T> {
-    * [Symbol.iterator](): Iterator<T> {
+    *[Symbol.iterator](): Iterator<T> {
         yield* this.iterate();
     }
 
     protected abstract iterate(): Generator<T>;
+
+    iterator() {
+        return this.iterate();
+    }
 }
 
 export class SimpleSequencer<T> extends Sequencer<T> {
