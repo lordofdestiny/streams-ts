@@ -1,4 +1,5 @@
 import {Stream} from "~/index"
+
 describe("Stream.toArray()", () => {
     let small_arr = [1, 2, 3];
 
@@ -40,6 +41,16 @@ describe("Stream.toMap()", () => {
             // @ts-expect-error
             Stream.from([1, 2, 3]).toMap();
         })
+    })
+
+    it("should be constructable from a complex stream", () => {
+        const orgArr: [string, number][] = arr.map(([k, v]) => [v, k]);
+        const map = new Map(orgArr);
+        const result = Stream.from(map)
+            .filter(([_, v]) => v % 2 == 0)
+            .map(([k, v]): [string, number] => [k, 2 * v])
+            .toMap()
+        expect( result).toEqual(new Map([["two", 4]]));
     })
 });
 
