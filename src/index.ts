@@ -30,6 +30,10 @@ export class Stream<T> extends Sequencer<T> {
         return new Map<K, V>([first.value, ...this.sequencer]);
     }
 
+    public toSet() {
+        return new Set(this.sequencer);
+    }
+
     public map<U>(fn: (x: T) => U) {
         return new Stream(new MapSequencer(this.sequencer, fn))
     }

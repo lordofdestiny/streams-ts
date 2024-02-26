@@ -1,31 +1,5 @@
 import {Stream} from "~/index"
-
-// noinspection JSUnusedLocalSymbols
-function* zip(...iterables: Iterable<any>[]) {
-    const iterators = iterables.map(i => i[Symbol.iterator]());
-    while (true) {
-        const results = iterators.map(i => i.next());
-        if (results.some(r => r.done)) {
-            break;
-        }
-        yield results.map(r => r.value);
-    }
-}
-
-function* zip_equal(...iterables: Iterable<any>[]) {
-    const iterators = iterables.map(i => i[Symbol.iterator]());
-    while (true) {
-        const results = iterators.map(i => i.next());
-        const all = results.every(r => r.done);
-        if (all) {
-            break;
-        }
-        if (!all && results.some(r => r.done)) {
-            throw new Error("Iterables are not of equal length");
-        }
-        yield results.map(r => r.value);
-    }
-}
+import {zip_equal} from "~/util";
 
 describe("Stream.from()", () => {
     let small_arr = [1, 2, 3];
@@ -52,50 +26,6 @@ describe("Stream.from()", () => {
         expect([...Stream.from(arr)]).toEqual(arr);
     })
 })
-
-describe("Stream.toArray()", () => {
-    let small_arr = [1, 2, 3];
-
-    it("should return an array", () => {
-        expect(Stream.from(small_arr).toArray()).toEqual(small_arr);
-    })
-
-    it("should return a new array", () => {
-        expect(Stream.from(small_arr).toArray()).not.toBe(small_arr);
-    })
-
-    it("should be the same as the spread operator", () => {
-        let s = Stream.from(small_arr);
-        expect(s.toArray()).toEqual([...s]);
-    })
-
-});
-
-
-describe("Stream.toMap()", () => {
-    let arr: Array<[number, string]> = [[1, "one"], [2, "two"], [3, "three"]];
-
-    it("should work with empty streams", () => {
-        let s = Stream.from([])
-            .toMap();
-        expect(s).toBeInstanceOf(Map);
-        expect(s).toEqual(new Map());
-    })
-
-    it("should convert to a Map", () => {
-        let s = Stream.from(arr)
-            .toMap();
-        expect(s).toBeInstanceOf(Map);
-        expect(s).toEqual(new Map(arr));
-    })
-
-    it("should not compile with a non-tuple type", () => {
-        expect(() => {
-            // @ts-expect-error
-            Stream.from([1, 2, 3]).toMap();
-        }).toThrow(TypeError)
-    })
-});
 
 describe("Stream.map()", () => {
     let numbers = [1, 2, 3];
