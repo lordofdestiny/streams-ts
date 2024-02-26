@@ -7,6 +7,7 @@ describe('zip', () => {
         const result = Array.from(zip(a, b));
         expect(result).toEqual([[1, 'a'], [2, 'b'], [3, 'c']]);
     });
+    
     it('should zip three arrays', () => {
         const a = [1, 2, 3];
         const b = ['a', 'b', 'c'];

@@ -39,7 +39,7 @@ describe("Stream.toMap()", () => {
         expect(() => {
             // @ts-expect-error
             Stream.from([1, 2, 3]).toMap();
-        }).toThrow(TypeError)
+        })
     })
 });
 

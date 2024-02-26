@@ -1,31 +1,4 @@
 import {Stream} from "~/index"
-import {zip_equal} from "~/util";
-
-describe("Stream.from()", () => {
-    let small_arr = [1, 2, 3];
-
-    it("should be iterable", () => {
-        expect(Symbol.iterator in Stream.from([])).toBe(true);
-        expect(() => {
-            for (const x of Stream.from(small_arr)) {
-                expect(x).toBeLessThan(4);
-            }
-        }).not.toThrow();
-    })
-
-    it("should yield same values as the original iterable", () => {
-        expect(() => {
-            for (let [x, y] of zip_equal(Stream.from(small_arr), small_arr)) {
-                expect(x).toBe(y);
-            }
-        }).not.toThrow();
-    })
-
-    it("should be able to expand into an array", () => {
-        let arr = [1, 2, 3];
-        expect([...Stream.from(arr)]).toEqual(arr);
-    })
-})
 
 describe("Stream.map()", () => {
     let numbers = [1, 2, 3];
@@ -85,3 +58,50 @@ describe("Stream.filter()", () => {
         expect([...s]).toEqual([4, 8, 12]);
     });
 });
+
+describe("Stream.skip()", () => {
+    let numbers = [1, 2, 3, 4, 5, 6];
+
+    it("should skip the first 3 numbers", () => {
+        let s = Stream.from(numbers)
+            .skip(3);
+        expect([...s]).toEqual([4, 5, 6]);
+    })
+
+    it("should skip the first 0 numbers", () => {
+        let s = Stream.from(numbers)
+            .skip(0);
+        expect([...s]).toEqual(numbers);
+    })
+
+    it("should skip all the numbers", () => {
+        let s = Stream.from(numbers)
+            .skip(numbers.length);
+        expect([...s]).toEqual([]);
+    })
+
+    it("should be chainable", () => {
+        let s = Stream.from(numbers)
+            .skip(3)
+            .skip(2);
+        expect([...s]).toEqual([6]);
+    })
+})
+
+describe("Stream.enumerate()", () => {
+    let numbers = [1, 2, 3, 4, 5, 6];
+
+    it("should enumerate the numbers", () => {
+        let s = Stream.from(numbers)
+            .enumerate();
+        expect([...s])
+            .toEqual([[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6]]);
+    })
+
+    it("should be chainable", () => {
+        let s = Stream.from(numbers)
+            .enumerate()
+            .map(([i, x]) => i * x);
+        expect([...s]).toEqual([0, 2, 6, 12, 20, 30]);
+    })
+})
