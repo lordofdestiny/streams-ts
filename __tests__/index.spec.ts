@@ -365,6 +365,10 @@ describe("Stream.eqBy()", () => {
 })
 
 describe("Stream.isSorted()", () => {
+    test("if empty stream is sorted", () => {
+        expect(Stream.of().isSorted()).toEqual(true);
+    })
+
     it("should check if the stream is sorted", () => {
         let s1 = Stream.from([1, 2, 3]);
         let s2 = Stream.from([3, 2, 1]);
@@ -395,6 +399,10 @@ describe("Stream.isSorted()", () => {
 })
 
 describe("Stream.isSortedBy()", () => {
+    test("if empty stream is sorted", () => {
+        expect(Stream.of<number>().isSortedBy((a, b) => a - b)).toEqual(true);
+    })
+
     it("should check if the stream is sorted by comparator", () => {
         let s1 = Stream.from([1, 2, 3]);
         let s2 = Stream.from([3, 2, 1]);
@@ -406,6 +414,8 @@ describe("Stream.isSortedBy()", () => {
         let s1 = Stream.from([3, 2, 1]);
         let s2 = Stream.from([1, 2, 3]);
         expect(s1.isSortedBy((a, b) => b - a)).toEqual(true);
+        expect(s1.isSortedBy((a, b) => b - a, true)).toEqual(false);
+        expect(s2.isSortedBy((a, b) => b - a)).toEqual(false);
         expect(s2.isSortedBy((a, b) => b - a, true)).toEqual(true);
     })
 
@@ -413,7 +423,9 @@ describe("Stream.isSortedBy()", () => {
         let s1 = Stream.from([{x: 1}, {x: 2}, {x: 3}]);
         let s2 = Stream.from([{x: 3}, {x: 2}, {x: 1}]);
         expect(s1.isSortedBy((a, b) => a.x - b.x)).toEqual(true);
+        expect(s1.isSortedBy((a, b) => a.x - b.x, true)).toEqual(false);
         expect(s2.isSortedBy((a, b) => a.x - b.x)).toEqual(false);
+        expect(s2.isSortedBy((a, b) => a.x - b.x, true)).toEqual(true);
     })
 })
 

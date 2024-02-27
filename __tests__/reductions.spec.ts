@@ -1,4 +1,3 @@
-import {EmptyStreamReductionError} from "~/errors";
 import {Stream} from "~/index";
 
 describe("Stream.fold()", () => {
@@ -21,10 +20,9 @@ describe("Stream.fold()", () => {
 })
 
 describe("Stream.reduce()", () => {
-    it("should throw EmptyStreamReductionError", () => {
+    it("should return undefined for empty stream", () => {
         let s = Stream.from<number>([]);
-        expect(() => s.reduce((acc, x) => acc + x))
-            .toThrow(EmptyStreamReductionError);
+        expect(s.reduce((acc, x) => acc + x)).toEqual(undefined);
     })
 
     it("should sum first 10 numbers", () => {

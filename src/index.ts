@@ -1,8 +1,18 @@
-import {EmptyStreamReductionError, ArgumentCountError, ValueError} from "~/errors";
+import {ArgumentCountError, ValueError} from "~/errors";
+import {
+    chunk,
+    enumerate,
+    filter,
+    flatten,
+    map,
+    rangeStartStopStep,
+    rangeZeroToN,
+    repeat,
+    skip, slide,
+    take,
+    takeWhile, zip
+} from "~/generators";
 import {Sequencer} from "~/sequencer";
-
-
-export type Iterableify<T> = { [K in keyof T]: Iterable<T[K]> }
 
 export class Stream<T> extends Sequencer<T> {
     protected readonly sequencer: Sequencer<T>;
@@ -32,18 +42,10 @@ export class Stream<T> extends Sequencer<T> {
         }
 
         if (arguments.length === 1) {
-            return new Stream<number>(new Sequencer((function* range(): Generator<number> {
-                for (let i = 0; i < bound1; i++) yield i;
-            })()));
+            return new Stream<number>(new Sequencer(rangeZeroToN(bound1)));
         }
 
-        return new Stream<number>(new Sequencer((function* range() {
-            if (bound1 < bound2) {
-                for (let val = bound1; val < bound2; val += step) yield val;
-            } else {
-                for (let val = bound1; val > bound2; val += step) yield val;
-            }
-        })()));
+        return new Stream<number>(new Sequencer(rangeStartStopStep(bound1, bound2, step)));
     }
 
     public static empty<T>() {
@@ -51,9 +53,7 @@ export class Stream<T> extends Sequencer<T> {
     }
 
     public static repeat<T>(value: T) {
-        return new Stream<T>(new Sequencer((function* repeat() {
-            while (true) yield value;
-        })()));
+        return new Stream<T>(new Sequencer(repeat(value)));
     }
 
     public toArray() {
@@ -61,11 +61,14 @@ export class Stream<T> extends Sequencer<T> {
     }
 
     public toMap<K, V>(this: Stream<[K, V]>) {
-        const iterator = this.sequencer.iterator();
-        const {value, done} = iterator.next();
-        if (done) return new Map<K, V>();
-        console.assert(value instanceof Array, "Stream.toMap() requires a stream of key-value pairs");
-        return new Map<K, V>(Stream.of(value).chain(iterator));
+        try {
+            return new Map(this.sequencer);
+        } catch (e) {
+            if (e instanceof TypeError) {
+                throw new TypeError("Stream.toMap() requires a stream of key-value pairs");
+            }
+            throw e;
+        }
     }
 
     public toSet() {
@@ -73,56 +76,27 @@ export class Stream<T> extends Sequencer<T> {
     }
 
     public skip(n: number) {
-        const iterator = this.sequencer.iterator();
-        return new Stream(new Sequencer((function* skip() {
-            while (n-- > 0) iterator.next();
-            yield* iterator;
-        })()));
+        return new Stream(new Sequencer(skip(this.sequencer, n)));
     }
 
     public take(n: number) {
-        const iterator = this.sequencer.iterator();
-        return new Stream(new Sequencer((function* take() {
-            while (n-- > 0) {
-                const {value, done} = iterator.next();
-                if (done) return;
-                yield value;
-            }
-        })()))
+        return new Stream(new Sequencer(take(this.sequencer, n)));
     }
 
     public takeWhile(predicate: (x: T) => boolean) {
-        const {sequencer} = this;
-        return new Stream(new Sequencer((function* takeWhile() {
-            for (const x of sequencer) {
-                if (!predicate(x)) return;
-                yield x;
-            }
-        })()));
+        return new Stream(new Sequencer(takeWhile(this.sequencer, predicate)));
     }
 
     public enumerate(): Stream<[number, T]> {
-        const {sequencer} = this;
-        return new Stream(new Sequencer((function* enumerate() {
-            let i = 0;
-            for (const x of sequencer) yield [i++, x];
-        })()));
+        return new Stream(new Sequencer(enumerate(this.sequencer)));
     }
 
     public map<U>(fn: (x: T) => U) {
-        const {sequencer} = this;
-        return new Stream(new Sequencer((function* map() {
-            for (const x of sequencer) yield fn(x);
-        })()));
+        return new Stream(new Sequencer(map(this.sequencer, fn)));
     }
 
     public filter(predicate: (x: T) => boolean) {
-        const {sequencer} = this;
-        return new Stream(new Sequencer((function* filter() {
-            for (const x of sequencer) {
-                if (predicate(x)) yield x;
-            }
-        })()));
+        return new Stream(new Sequencer(filter(this.sequencer, predicate)));
     }
 
     public fold<U>(initial: U, fn: (acc: U, x: T) => U) {
@@ -134,60 +108,26 @@ export class Stream<T> extends Sequencer<T> {
     }
 
     public flatten<U>(this: Stream<Iterable<U>>) {
-        const {sequencer} = this;
-        return new Stream(new Sequencer((function* flatten() {
-            for (const iterable of sequencer) {
-                yield* iterable;
-            }
-        })()));
+        return new Stream(new Sequencer(flatten(this.sequencer)));
     }
 
-    public static zip<T extends Array<any>>(...iterables: Iterableify<T>): Stream<T> {
-        return new Stream(new Sequencer((function* zip() {
-            const iterators = iterables.map(iterable => iterable[Symbol.iterator]());
-            while (true) {
-                const values = iterators.map(iterator => iterator.next());
-                if (values.some(({done}) => done)) return;
-                yield values.map(({value}) => value) as T;
-            }
-        })()));
+    public static zip<T extends Array<any>>(...iterables: { [I in keyof T]: Iterable<T[I]> }): Stream<T> {
+        return new Stream(new Sequencer(zip<T>(iterables)));
     }
 
     public chunk(this: Stream<T>, n: number) {
         if (n <= 0) throw new ValueError("Stream.chunk(): n must be greater than zero");
-        const {sequencer} = this;
-        return new Stream(new Sequencer((function* chunk() {
-            let buffer: T[] = [];
-            for (const x of sequencer) {
-                buffer.push(x);
-                if (buffer.length === n) {
-                    yield buffer;
-                    buffer = [];
-                }
-            }
-            if (buffer.length > 0) yield buffer;
-        })()));
+        return new Stream(new Sequencer(chunk(this.sequencer, n)));
     }
 
     public slide(this: Stream<T>, n: number, step = 1) {
         if (n <= 0) throw new ValueError("Stream.chunk(): n must be greater than zero");
-        const {sequencer} = this;
-
-        return new Stream(new Sequencer((function* slide() {
-            let buffer: T[] = [];
-            for (const x of sequencer) {
-                buffer.push(x);
-                if (buffer.length === n) {
-                    yield buffer;
-                    buffer = buffer.slice(step);
-                }
-            }
-        })()));
+        return new Stream(new Sequencer(slide(this, n, step)));
     }
 
     public compare<U>(this: Stream<U>, other: Stream<U>) {
-        const iterator1 = this.sequencer.iterator();
-        const iterator2 = other.sequencer.iterator();
+        const iterator1 = this.sequencer[Symbol.iterator]();
+        const iterator2 = other.sequencer[Symbol.iterator]();
         while (true) {
             const {value: x1, done: done1} = iterator1.next();
             const {value: x2, done: done2} = iterator2.next();
@@ -236,13 +176,12 @@ export class Stream<T> extends Sequencer<T> {
             return this.map(key).isSorted(reverse);
         }
 
-        const iterator = this.sequencer.iterator();
+        const iterator = this.sequencer[Symbol.iterator]();
         let {value, done} = iterator.next();
         if (done) return true;
-        let prev = value
+        let prev = value;
 
         /* if (reverse) while(true) { ... } */
-
         while (reverse) {
             ({value, done} = iterator.next());
             if (done) return true;
@@ -260,7 +199,7 @@ export class Stream<T> extends Sequencer<T> {
     }
 
     public isSortedBy(this: Stream<T>, fn: (x: T, y: T) => number, reverse: boolean = false): boolean {
-        const iterator = this.sequencer.iterator();
+        const iterator = this.sequencer[Symbol.iterator]();
         let {value, done} = iterator.next();
         if (done) return true;
         let prev = value;
@@ -290,15 +229,18 @@ export class Stream<T> extends Sequencer<T> {
         })()));
     }
 
-    public reduce(fn: (acc: T, x: T) => T) {
-        const iterator = this.sequencer.iterator();
-        const first = iterator.next();
+    public reduce(fn: (acc: T, x: T) => T): T | undefined {
+        const iterator = this.sequencer[Symbol.iterator]();
+        const {value, done} = iterator.next();
+        if (done) return undefined;
 
-        if (first.done) throw new EmptyStreamReductionError();
+        let acc = value;
 
-        return new Stream<T>(new Sequencer<T>((function* reduceUnary() {
-            yield* iterator
-        })())).fold(first.value, fn);
+        while (true) {
+            let {value, done} = iterator.next();
+            if (done) return acc;
+            acc = fn(acc, value);
+        }
     }
 
     public sum(this: Stream<number>) {
@@ -339,7 +281,7 @@ export class Stream<T> extends Sequencer<T> {
     }
 
     public all(this: Stream<boolean>) {
-        const iterator = this.sequencer.iterator();
+        const iterator = this.sequencer[Symbol.iterator]();
         while (true) {
             const {value, done} = iterator.next();
             if (done) return true;
@@ -348,7 +290,7 @@ export class Stream<T> extends Sequencer<T> {
     }
 
     public allMap(this: Stream<T>, fn: (x: T) => boolean) {
-        const iterator = this.sequencer.iterator();
+        const iterator = this.sequencer[Symbol.iterator]();
         while (true) {
             const {value, done} = iterator.next();
             if (done) return true;
@@ -357,7 +299,7 @@ export class Stream<T> extends Sequencer<T> {
     }
 
     public any(this: Stream<boolean>) {
-        const iterator = this.sequencer.iterator();
+        const iterator = this.sequencer[Symbol.iterator]();
         while (true) {
             const {value, done} = iterator.next();
             if (done) return false;
@@ -366,7 +308,7 @@ export class Stream<T> extends Sequencer<T> {
     }
 
     public anyMap(this: Stream<T>, fn: (x: T) => boolean) {
-        const iterator = this.sequencer.iterator();
+        const iterator = this.sequencer[Symbol.iterator]();
         while (true) {
             const {value, done} = iterator.next();
             if (done) return false;

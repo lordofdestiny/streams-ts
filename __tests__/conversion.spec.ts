@@ -40,7 +40,14 @@ describe("Stream.toMap()", () => {
         expect(() => {
             // @ts-expect-error
             Stream.from([1, 2, 3]).toMap();
-        })
+        }).toThrow();
+    })
+
+    it("should throw an error if the stream is not a tuple", () => {
+        expect(() => {
+            // @ts-expect-error
+            Stream.from([1, 2, 3]).toMap();
+        }).toThrow(TypeError);
     })
 
     it("should be constructable from a complex stream", () => {
