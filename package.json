@@ -1,9 +1,14 @@
 {
-  "name": "streams-ts",
+  "name": "@lordofdestiny/streams-ts",
   "version": "1.0.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "author": "lordofdestiny",
+  "license": "MIT",
   "description": "Streams library for TS",
-  "main": "index.js",
   "scripts": {
+    "preinstall": "node scripts/preinstall.js",
+    "prepublish": "npm run build",
     "build": "tsc --build tsconfig.build.json && tsc-alias",
     "build:watch": "concurrently --kill-others \"tsc --build tsconfig.build.json --watch\" \"tsc-alias -w\"",
     "test": "jest",
@@ -18,14 +23,18 @@
     "clean:docs": "ts-node scripts/clean.ts docs",
     "clean": "ts-node scripts/clean.ts dist coverage docs"
   },
-  "keywords": ["typescript", "npm", "Stream API", "streams", "streams-ts"],
+  "keywords": [
+    "typescript",
+    "npm",
+    "Stream API",
+    "streams",
+    "streams-ts"
+  ],
   "homepage": "lordofdestiny.github.io/streams-ts",
   "repository": {
     "type": "git",
-    "url": "github:lordofdestiny/streams-ts.git"
+    "url": "git+https://github.com/lordofdestiny/streams-ts.git"
   },
-  "author": "lordofdestiny",
-  "license": "MIT",
   "devDependencies": {
     "@jest/globals": "^29.7.0",
     "@tsconfig/node18": "^18.2.2",

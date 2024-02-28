@@ -17,79 +17,13 @@ and Rust's <a href="https://doc.rust-lang.org/std/iter/trait.Iterator.html" targ
 Library is still in development and not yet ready for production use. It's mostly feature complete,
 but there are still some missing methods and some methods, like `cycle` and `reverse`.
 
-Library is written in TypeScript and is intended to be used with TypeScript. It's not yet published.
+Library is written in TypeScript and compiled to ES6. You can use it in both Node.js and the browser,
+with both TypeScript and JavaScript.
 
-Focus of the library was more on the API design and less on performance.
+All methods are lazy and return a new Stream object. Even so, 
+focus of the library was more on the API design and less on performance.
 
-All methods are lazy and return a new Stream object.
-
-All methods are heavily tested with Jest.
-
-## Installation
-
-Library is not yet published. You can always download the source code and copy it to your project.
-
-[comment]: <> (```npm install streams-ts```)
-
-## Building
-
-If you decide to clone the repository, you can build the library with:
-
-```npm run build```
-
-This will generate the build files in the `dist` directory.
-
-If you want, you can also build the library in watch mode:
-
-```npm run build:watch```
-
-## Running tests
-
-If you decide to clone the repository, you can run tests with:
-
-```
-npm install
-npm test
-```
-
-Or you can run tests with watch mode:
-
-```npm run test:watch```
-
-You can also generate coverage report with:
-
-```npm run coverage```
-
-This opens a browser with coverage report.
-
-## Documentation
-
-#### *_[Official documentation is avilable at here](https://streams-ts.github.io/streams-ts/)_*
-
-You can also generate documentation from the source code by using:
-
-```npm run docs```
-
-After that, you can open `docs/index.html` in your browser or by running
-
-```npm run docs:open```
-
-You can check the tests for more examples.
-   
-
-## Clean build results
-
-### Build results
-
-```npm run clean:build```
-
-### Documentation
-
-```npm run clean:docs```
-
-### Coverage
-
-```npm run clean:coverage```
+Library is heavily tested with Jest.
 
 ## Examples
 
@@ -120,10 +54,75 @@ const result3 = Stream.from(arr)
 console.log(result3); // 4
 
 const result4 = Stream.from(arr)
-    .slide(2)
+    .chunk(2)
     .toMap()
 
 console.log(result4); // Map { 1 => 2, 3 => 4, 5 => 6, 7 => 8, 9 => 10 }
 ```
 
+## Installation
+
+To install the library, you can use npm: 
+
+```npm i lordofdestiny/streams-ts```
+
+
 For mor examples, check the tests or the documentation.
+
+## Building
+
+If you decide to clone the repository, you can build the library with:
+
+```npm run build```
+
+This will generate the build files in the `dist` directory.
+
+If you want, you can also build the library in watch mode:
+
+```npm run build:watch```
+
+## Running tests
+
+If you decide to clone the repository, you can run tests with:
+
+```
+npm test
+```
+
+Or you can run tests with watch mode:
+
+```npm run test:watch```
+
+You can also generate coverage report with:
+
+```npm run coverage```
+
+This opens a browser with coverage report.
+
+## Documentation
+
+#### *_[Official documentation is avilable at here](https://lordofdestiny.github.io/streams-ts/)_*
+
+You can also generate documentation from the source code by using:
+
+```npm run docs```
+
+After that, you can open `docs/index.html` in your browser or by running
+
+```npm run docs:open```
+
+You can check the tests for more examples.
+
+## Clean build results
+
+### Build results
+
+```npm run clean:build```
+
+### Documentation
+
+```npm run clean:docs```
+
+### Coverage
+
+```npm run clean:coverage```

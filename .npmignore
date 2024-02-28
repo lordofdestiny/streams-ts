@@ -1,0 +1,13 @@
+.idea/
+scripts/
+__tests__/
+coverage/
+docs/
+.github/
+.gitattributes
+tsconfig.*
+typedoc.json
+jest.config.js
+*.tgz
+!scripts/preinstall.js
+.npmrc
