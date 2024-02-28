@@ -1,8 +1,16 @@
 {
   "entryPoints": [
-    "src/index.ts"
+    "./src"
   ],
   "out": "docs",
-  "excludeNotExported": true,
-  "excludePrivate": true
+  "excludeNotDocumented": true,
+  "excludePrivate": false,
+  "excludeInternal": false,
+  "excludeExternals": false,
+  "darkHighlightTheme": "dark-plus",
+  "validation": {
+    "invalidLink": true,
+    "notDocumented": true,
+    "notExported": true
+  },
 }

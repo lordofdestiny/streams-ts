@@ -1,8 +1,8 @@
 # streams-ts
 
 TypeScript implementation of the Streams API for Node.js. Inspired by the
-[Java 8 Stream API](https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html)
-and Rust's [Iterator](https://doc.rust-lang.org/std/iter/trait.Iterator.html).
+<a href="https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html" target="_blank">Java 8 Stream API</a>
+and Rust's <a href="https://doc.rust-lang.org/std/iter/trait.Iterator.html" target="_blank">Iterator trait</a>.
 
 Library is still in development and not yet ready for production use. It's mostly feature complete,
 but there are still some missing methods and some methods, like `cycle` and `reverse`.
@@ -59,7 +59,9 @@ You can also generate documentation from the source code by using:
 
 ```npm run docs```
 
-After that, you can open `docs/index.html` in your browser.
+After that, you can open `docs/index.html` in your browser or by running
+    
+```npm run docs:open```
 
 ## Clean build results
 
@@ -80,30 +82,30 @@ After that, you can open `docs/index.html` in your browser.
 ```typescript
 import { Stream } from 'streams-ts';
 
-const stream = Stream.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
+const arr = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
-const result = stream
+const result = Stream.from(arr)
     .filter(x => x % 2 === 0)
     .map(x => x * 2)
     .toArray();
 
 console.log(result); // [4, 8, 12, 16, 20]
 
-const result2 = stream
+const result2 = Stream.from(arr)
     .filter(x => x % 2 === 0)
     .map(x => x * 2)
     .reduce((acc, x) => acc + x, 0);
 
 console.log(result2); // 60
 
-const result3 = stream
+const result3 = Stream.from(arr)
     .filter(x => x % 2 === 0)
     .map(x => x * 2)
     .findFirst();
 
 console.log(result3); // 4
 
-const result4 = stream
+const result4 = Stream.from(arr)
     .slide(2)
     .toMap()
 

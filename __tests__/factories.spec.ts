@@ -114,6 +114,10 @@ describe("Stream.range()", () => {
         expect(() => Stream.range(1, 2, 0)).toThrow(ValueError);
     })
 
+    it("should generate integers from 2 to 4", () => {
+        expect([...Stream.range(2, 5)]).toEqual([2, 3, 4]);
+    })
+
     it("should generate integers from 0 to 9", () => {
         expect([...Stream.range(10)]).toEqual([...Array(10).keys()]);
     })
@@ -131,4 +135,33 @@ describe("Stream.range()", () => {
         const expected = [9, 7, 5, 3, 1];
         expect([...Stream.range(9, 0, -2)]).toEqual(expected);
     })
+})
+
+describe("Stream.iterate()", () => {
+    it("should generate the first 3 powers of 2", () => {
+        const expected = [1, 2, 4];
+        expect([...Stream.iterate(1, x => x * 2).take(3)]).toEqual(expected);
+    })
+
+    it("should generate odd integers from 1 to 9", () => {
+        const expected = [1, 3, 5, 7, 9];
+        expect([...Stream.iterate(1, x => x + 2).take(5)]).toEqual(expected);
+    })
+
+    it("should generate the alphabet", () => {
+        const expected = "abcdefghijklmnopqrstuvwxyz";
+        const result = Stream.iterate("a".charCodeAt(0), x => x + 1)
+            .map(String.fromCharCode)
+            .take(26)
+            .join("");
+        expect(result).toEqual(expected);
+    })
+
+    it("should generate powers of two less then 5000", () => {
+        const expected = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096];
+        expect([
+            ...Stream.iterate(1, x => x * 2)
+            .takeWhile(x => x < 5000)
+        ]).toEqual(expected);
+    });
 })
