@@ -1,11 +1,14 @@
 # streams-ts
 
+
 <a href="https://github.com/lordofdestiny/streams-ts">
     <img alt="GitHub" src="https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=whit"/>
 </a>
 <a href="https://lordofdestiny.github.io/streams-ts">
     <img alt="GitHub Pages" src="https://img.shields.io/badge/GitHub%20Pages-222222?style=for-the-badge&logo=GitHub%20Pages&logoColor=white"/>
 </a>
+
+![badge](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/<user>/e080b14c85e64df5b56f68242a183a5a/raw/stream-ts-coverage.json)
 
 TypeScript implementation of the Streams API for Node.js. Inspired by the
 <a href="https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html" target="_blank">Java 8 Stream API</a>
@@ -53,9 +56,9 @@ Or you can run tests with watch mode:
 
 ```npm run test:watch```
 
-After running tests, you can check the coverage with:
+You can also generate coverage report with:
 
-```npm run test:coverage```
+```npm run coverage```
 
 This opens a browser with coverage report.
 

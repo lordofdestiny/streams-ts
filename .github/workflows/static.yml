@@ -1,5 +1,5 @@
 # Simple workflow for deploying static content to GitHub Pages
-name: Deploy static content to Pages
+name: Generate and deploy TypeDoc to GitHub Pages
 
 on:
   # Runs on pushes targeting the default branch
@@ -39,6 +39,20 @@ jobs:
           cache: 'npm'         
       - run: npm ci
       - run: npm run docs
+      - run: npm run coverage:badges
+      - run: node scripts/extract-coverage.js >> $GITHUB_ENV
+      - name: Create coverage badges
+        uses: schneegans/dynamic-badges-action@v1.7.0
+        with:
+          auth: ${{ secrets.COVERAGE_SECRET }}
+          gistID: "e080b14c85e64df5b56f68242a183a5a"
+          filename: stream-ts-coverage.json
+          label: Coverage badge for stream-ts
+          message: "Coverage badge for stream-ts"
+          valColorRange: ${{COVERAGE_VALUE}}
+          minColorRange: 60
+          maxColorRange: 95
+          style : "social"
       - name: Setup Pages
         uses: actions/configure-pages@v4
       - name: Upload artifact

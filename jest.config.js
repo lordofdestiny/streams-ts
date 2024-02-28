@@ -16,4 +16,11 @@ module.exports = {
     collectCoverage: true,
     clearMocks: true,
     coverageDirectory: 'coverage',
+    coverageReporters:[
+        'lcov',
+        'json-summary',
+        'text',
+        'clover',
+        'text-summary',
+    ]
 }
