@@ -3,7 +3,9 @@
   "$schema": "https://json.schemastore.org/tsconfig",
   "compilerOptions": {
     "lib": [
-      "ES2023",
+      "ES2015",
+      "ES2015.Iterable",
+      "ES2015.Collection"
     ],
     "declaration": true,
     "module": "NodeNext",
