@@ -1,4 +1,6 @@
 # streams-ts
+![https://img.shields.io/badge/GitHub%20Pages-222222?style=for-the-badge&logo=GitHub%20Pages&logoColor=white](https://lordofdestiny.github.io/streams-ts/)
+![https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white](https://github.com/lordofdestiny/streams-ts)
 
 TypeScript implementation of the Streams API for Node.js. Inspired by the
 <a href="https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html" target="_blank">Java 8 Stream API</a>
@@ -54,14 +56,18 @@ This opens a browser with coverage report.
 
 ## Documentation
 
-Documentation is not yet hosted. You can check the tests for examples.
+#### *_[Official documentation is avilable at here](https://streams-ts.github.io/streams-ts/)_*
+
 You can also generate documentation from the source code by using:
 
 ```npm run docs```
 
 After that, you can open `docs/index.html` in your browser or by running
-    
+
 ```npm run docs:open```
+
+You can check the tests for more examples.
+   
 
 ## Clean build results
 
