@@ -18,9 +18,14 @@
     "clean:docs": "ts-node scripts/clean.ts docs",
     "clean": "ts-node scripts/clean.ts dist coverage docs"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": ["typescript", "npm", "Stream API", "streams", "streams-ts"],
+  "homepage": "lordofdestiny.github.io/streams-ts",
+  "repository": {
+    "type": "git",
+    "url": "github:lordofdestiny/streams-ts.git"
+  },
+  "author": "lordofdestiny",
+  "license": "MIT",
   "devDependencies": {
     "@jest/globals": "^29.7.0",
     "@tsconfig/node18": "^18.2.2",
