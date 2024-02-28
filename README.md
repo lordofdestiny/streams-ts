@@ -1,5 +1,6 @@
 # streams-ts
 
+![badge](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/lordofdestiny/e080b14c85e64df5b56f68242a183a5a/raw/stream-ts-coverage.json)
 
 <a href="https://github.com/lordofdestiny/streams-ts">
     <img alt="GitHub" src="https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=whit"/>
@@ -8,7 +9,6 @@
     <img alt="GitHub Pages" src="https://img.shields.io/badge/GitHub%20Pages-222222?style=for-the-badge&logo=GitHub%20Pages&logoColor=white"/>
 </a>
 
-![badge](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/<user>/e080b14c85e64df5b56f68242a183a5a/raw/stream-ts-coverage.json)
 
 TypeScript implementation of the Streams API for Node.js. Inspired by the
 <a href="https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html" target="_blank">Java 8 Stream API</a>
