@@ -1,7 +1,11 @@
 # streams-ts
 
-![https://github.com/lordofdestiny/streams-ts](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)
-![https://lordofdestiny.github.io/streams-ts/](https://img.shields.io/badge/GitHub%20Pages-222222?style=for-the-badge&logo=GitHub%20Pages&logoColor=white)
+<a href="https://github.com/lordofdestiny/streams-ts">
+    <img alt="GitHub" src="https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=whit"/>
+</a>
+<a href="https://lordofdestiny.github.io/streams-ts">
+    <img alt="GitHub Pages" src="https://img.shields.io/badge/GitHub%20Pages-222222?style=for-the-badge&logo=GitHub%20Pages&logoColor=white"/>
+</a>
 
 TypeScript implementation of the Streams API for Node.js. Inspired by the
 <a href="https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html" target="_blank">Java 8 Stream API</a>
