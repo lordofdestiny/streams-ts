@@ -1,14 +1,4 @@
-// noinspection JSUnusedLocalSymbols
-export function* zip(...iterables: Iterable<any>[]) {
-    const iterators = iterables.map(i => i[Symbol.iterator]());
-    while (true) {
-        const results = iterators.map(i => i.next());
-        if (results.some(r => r.done)) {
-            break;
-        }
-        yield results.map(r => r.value);
-    }
-}
+/* istanbul ignore file */
 
 export class UnequalIterableLengthError extends Error {
     constructor() {
