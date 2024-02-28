@@ -53,8 +53,9 @@ jobs:
           minColorRange: 60
           maxColorRange: 95
           namedLogo: jest
+          labelColor: "#FF5733"
           logoColor: "#C21325"
-          style : "social"
+          style : for-the-badge
       - name: Setup Pages
         uses: actions/configure-pages@v4
       - name: Upload artifact
