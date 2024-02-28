@@ -47,11 +47,13 @@ jobs:
           auth: ${{ secrets.COVERAGE_SECRET }}
           gistID: "e080b14c85e64df5b56f68242a183a5a"
           filename: stream-ts-coverage.json
-          label: Coverage badge for stream-ts
-          message: "Coverage badge for stream-ts"
+          label: Coverage of stream-ts
+          message: is ${{ env.COVERAGE_VALUE }}%
           valColorRange: ${{ env.COVERAGE_VALUE }}
           minColorRange: 60
           maxColorRange: 95
+          namedLogo: jest
+          logoColor: "#C21325"
           style : "social"
       - name: Setup Pages
         uses: actions/configure-pages@v4
