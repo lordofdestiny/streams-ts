@@ -49,7 +49,7 @@ jobs:
           filename: stream-ts-coverage.json
           label: Coverage badge for stream-ts
           message: "Coverage badge for stream-ts"
-          valColorRange: ${{COVERAGE_VALUE}}
+          valColorRange: ${{ COVERAGE_VALUE }}
           minColorRange: 60
           maxColorRange: 95
           style : "social"
