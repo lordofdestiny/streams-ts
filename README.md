@@ -66,6 +66,8 @@ To install the library, you can use npm:
 
 ```npm i lordofdestiny/streams-ts```
 
+Note that currently there only exists a GitHub Package,
+so to install it, you will have to authenticate with your GitHub token.
 
 For mor examples, check the tests or the documentation.
 
