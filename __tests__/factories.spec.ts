@@ -145,6 +145,10 @@ describe("Stream.range()", () => {
         const expected = [9, 7, 5, 3, 1];
         expect([...Stream.range(9, 0, -2)]).toEqual(expected);
     })
+
+    it("should return empty stream if no step is provided", () => {
+        expect([...Stream.range(5, 0)]).toEqual([]);
+    })
 })
 
 describe("Stream.iterate()", () => {

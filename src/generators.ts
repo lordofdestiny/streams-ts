@@ -43,6 +43,7 @@ export function rangeStartStopStep(start: number, stop: number, step: number): G
  * @returns A new generator that yields numbers in the range [`start`, `stop`)
  * */
 function* rangeIncreasing(start: number, stop: number, step: number): Generator<number> {
+    if (step <= 0) return;
     for (let val = start; val < stop; val += step) yield val;
 }
 
@@ -58,6 +59,7 @@ function* rangeIncreasing(start: number, stop: number, step: number): Generator<
  * @returns A new generator that yields numbers in the range [`stop`, `start`)
  * */
 function* rangeDecreasing(start: number, stop: number, step: number): Generator<number> {
+    if (step >= 0) return;
     for (let val = start; val > stop; val += step) yield val;
 }
 
@@ -71,7 +73,7 @@ function* rangeDecreasing(start: number, stop: number, step: number): Generator<
  * @param value - The value to yield
  *
  * @returns A new generator that yields the `value` indefinitely.
-* */
+ * */
 export function* repeat<T>(value: T): Generator<T> {
     while (true) yield value;
 }
@@ -95,7 +97,7 @@ export function* repeat<T>(value: T): Generator<T> {
  * console.log([...take(gen, 5)]); // [1, 2, 4, 8, 16]
  * ```
  * */
-export function* iterate<T>(init: T, fn : UnaryOperator<T>): Generator<T> {
+export function* iterate<T>(init: T, fn: UnaryOperator<T>): Generator<T> {
     let value = init;
     while (true) {
         yield value;

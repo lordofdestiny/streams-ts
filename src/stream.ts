@@ -173,8 +173,14 @@ export class Stream<T> extends Sequencer<T> {
      *
      * @example Create a Stream of numbers in range [5, 0)
      * ```ts
-     * const s = Stream.range(5, 0);
+     * const s = Stream.range(5, 0, -1);
      * console.log(s.toArray()); // [5, 4, 3, 2, 1]
+     * ```
+     *
+     * @example Stream would be empty without the step
+     * ```ts
+     * const s = Stream.range(5, 0);
+     * console.log(s.toArray()); // []
      * ```
      *
      * @group Factories
