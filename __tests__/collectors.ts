@@ -84,3 +84,20 @@ describe("Stream.toSet()", () => {
         expect(s.toSet()).toEqual(new Set(s));
     })
 });
+
+describe("Stream.join()", () => {
+    it("should join the elements", () => {
+        let s = Stream.from(["a", "b", "c"]);
+        expect(s.join()).toEqual("abc");
+    })
+
+    it("should join the elements with a separator: ' '", () => {
+        let s = Stream.from(["a", "b", "c"]);
+        expect(s.join(" ")).toEqual("a b c");
+    })
+
+    it("should join the elements with a separator ', '", () => {
+        let s = Stream.from(["a", "b", "c"]);
+        expect(s.join(", ")).toEqual("a, b, c");
+    })
+})

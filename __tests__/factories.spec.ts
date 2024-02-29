@@ -107,7 +107,17 @@ describe("Stream.range()", () => {
 
     it("should throw if number of arguments is more than 3", () => {
         // @ts-expect-error
-        expect(() => Stream.range(1, 2, 3, 4)).toThrow(ArgumentCountError);
+        expect(() => Stream.range(1, 2, 3, 4))
+            .toThrow(ArgumentCountError);
+        try {
+            // @ts-expect-error
+            Stream.range()
+        } catch (e) {
+            expect(e).toBeInstanceOf(ArgumentCountError)
+            if (e instanceof ArgumentCountError) {
+                expect(e.function.name).toEqual("range");
+            }
+        }
     })
 
     it("should throw if the step is 0", () => {
@@ -161,7 +171,38 @@ describe("Stream.iterate()", () => {
         const expected = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096];
         expect([
             ...Stream.iterate(1, x => x * 2)
-            .takeWhile(x => x < 5000)
+                .takeWhile(x => x < 5000)
         ]).toEqual(expected);
     });
+})
+
+describe("Stream.zip()", () => {
+    let numbers = [1, 2, 3, 4, 5, 6];
+    let letters = ["a", "b", "c", "d", "e", "f"];
+    let booleans = [true, false, true, false, true, false];
+
+    it("should zip the numbers and letters", () => {
+        let s = Stream.zip(numbers, letters);
+        expect([...s])
+            .toEqual([[1, "a"], [2, "b"], [3, "c"], [4, "d"], [5, "e"], [6, "f"]]);
+    })
+
+    it("should be chainable", () => {
+        let s = Stream.zip(numbers, letters)
+            .map(([n, l]) => n + l);
+        expect([...s]).toEqual(["1a", "2b", "3c", "4d", "5e", "6f"]);
+    })
+
+    it("should zip the numbers, letters and symbols", () => {
+        let s = Stream.zip(numbers, letters, booleans);
+        expect([...s])
+            .toEqual([
+                [1, "a", true],
+                [2, "b", false],
+                [3, "c", true],
+                [4, "d", false],
+                [5, "e", true],
+                [6, "f", false]
+            ]);
+    })
 })
