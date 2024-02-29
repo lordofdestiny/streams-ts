@@ -62,30 +62,35 @@ export class Stream<T> extends Sequencer<T> {
      * @example Create a Stream from an array
      * ```ts
      * const s = Stream.from([1, 2, 3, 4, 5]);
+     * console.log(s.toArray()) // [1, 2, 3, 4, 5]
      *```
      *
      * @example Create a Stream from a string
      * ```ts
      *  const s = Stream.from("hello");
+     *  console.log(s.toArray()); // ["h", "e", "l", "l", "o"]
      * ```
      *
      * @example Create a Stream from a Set
      * ```ts
      *  const s = Stream.from(new Set([1, 2, 3, 4, 5]));
+     *  console.log(s.toArray()); // [1, 2, 3, 4, 5]
      * ```
      *
      * @example Create a Stream from a Map
      * ```ts
      * const s = Stream.from(new Map([["a", 1], ["b", 2], ["c", 3]]));
+     * console.log(s.toArray()); // [["a", 1], ["b", 2], ["c", 3]]
      * ```
      *
      * @example Create a Stream from an iterable
      * ```ts
      * const s = Stream.from({
-     *      *[Symbol.iterator] {
+     *      *[Symbol.iterator]() {
      *          yield 1; yield 2; yield 3;
      *      }
      *  });
+     *  console.log(s.toArray()); // [1, 2, 3]
      * ```
      *
      * @example Create a Stream from a generator function
@@ -97,7 +102,11 @@ export class Stream<T> extends Sequencer<T> {
      * }
      *
      * const s = Stream.from(gen());
+     * console.log(s.toArray()); // [0, 1, 2, 3, 4]
      * ```
+     *
+     * @see
+     * - {@link toArray} - collect Stream elements into an Array
      *
      * @group Factories
      * */
@@ -115,14 +124,19 @@ export class Stream<T> extends Sequencer<T> {
      * @example Create a Stream from variadic arguments
      * ```ts
      * const s = Stream.of(1, 2, 3, 4, 5);
+     * console.log(s.toArray()); // [1, 2, 3, 4, 5]
      * ```
      *
      * @example Create a Stream with spread syntax
      * ```ts
      * const s = Stream.of(..."hello");
+     * console.log(s.toArray()); // ["h", "e", "l", "l", "o"]
      * ```
      *
      * @group Factories
+     *
+     * @see
+     * - {@link Stream.toArray} - collect Stream elements into an Array
      * */
     public static of<T>(...values: T[]) {
         return new Stream<T>(new Sequencer(values));
@@ -140,6 +154,9 @@ export class Stream<T> extends Sequencer<T> {
      * ```
      *
      * @group Factories
+     *
+     * @see
+     * - {@link Stream.toArray} - collect Stream elements into an Array
      * */
     public static range(stop: number): Stream<number>;
     /**
@@ -188,7 +205,7 @@ export class Stream<T> extends Sequencer<T> {
     public static range(start: number, stop: number, step?: number): Stream<number>;
     public static range(bound1: number, bound2: number = Infinity, step = 1) {
         if (arguments.length < 1 || arguments.length > 3) {
-            throw new ArgumentCountError(this, arguments.length);
+            throw new ArgumentCountError(this.range, arguments.length);
         }
 
         if (step == 0) {
@@ -217,34 +234,37 @@ export class Stream<T> extends Sequencer<T> {
         return new Stream<T>(new Sequencer([]));
     }
 
-    /**
-     * Repeats a value indefinitely. The Stream will never be exhausted.
-     * If try to consume the Stream, it will run forever. You can use the {@link Stream.take} method to
-     * limit the number of elements.
-     *
-     * @typeParam T The type of the elements in the Stream
-     *
-     * @param value The value to repeat
-     *
-     * @returns A Stream of the repeated value
-     *
-     * @example Infinite Stream of 1s
-     * ```ts
-     * for(const x of Stream.repeat(1)) {
-     *    console.log(x);
-     * }
-     * // Output: 1 1 1 1 1 ...
-     * ```
-     *
-     * @example Take the first 5 elements of the infinite Stream
-     * ```ts
-     * const s = Stream.repeat(5).take(5);
-     * console.log(s.toArray()); // [5, 5, 5, 5, 5]
-     *```
-     *
-     * @group Factories
-     * */
     public static repeat<T>(value: T) {
+        /**
+         * Repeats a value indefinitely. The Stream will never be exhausted.
+         * If try to consume the Stream, it will run forever. You can use the {@link Stream.take} method to
+         * limit the number of elements.
+         *
+         * @typeParam T The type of the elements in the Stream
+         *
+         * @param value The value to repeat
+         *
+         * @returns A Stream of the repeated value
+         *
+         * @example Infinite Stream of 1s
+         * ```ts
+         * for(const x of Stream.repeat(1)) {
+         *    console.log(x);
+         * }
+         * // Output: 1 1 1 1 1 ...
+         * ```
+         *
+         * @example Take the first 5 elements of the infinite Stream
+         * ```ts
+         * const s = Stream.repeat(5).take(5);
+         * console.log(s.toArray()); // [5, 5, 5, 5, 5]
+         *```
+         *
+         * @see
+         * - {@link Stream.take} - take up to `n` of elements first elements of the Stream
+         *
+         * @group Factories
+         * */
         return new Stream<T>(new Sequencer(repeat(value)));
     }
 
@@ -260,6 +280,8 @@ export class Stream<T> extends Sequencer<T> {
      * @param fn The function to apply to the previous value to get the next value
      *
      * @returns A Stream of the generated values
+     *
+     * @group Factories
      *
      * @example Infinite Stream of powers of 2
      * ```ts
@@ -370,6 +392,13 @@ export class Stream<T> extends Sequencer<T> {
      * const s = Stream.range(5).skip(3);
      * console.log(s.toArray()); // [3, 4]
      * ```
+     *
+     * @see
+     * - Similar operations
+     *   - {@link Stream.take} - take the first `n` elements of the Stream
+     * - Mentioned in examples
+     *   - {@link Stream.range} - create a Stream of numbers
+     *   - {@link Stream.toArray} - collect Stream elements into an Array
      * */
     public skip(n: number) {
         return new Stream(new Sequencer(skip(this.sequencer, n)));
@@ -389,6 +418,14 @@ export class Stream<T> extends Sequencer<T> {
      * const s = Stream.range(5).take(3);
      * console.log(s.toArray()); // [0, 1, 2]
      * ```
+     *
+     * @see
+     * - Similar operations
+     *   - {@link Stream.skip} - skip the first `n` elements of the Stream
+     *   - {@link Stream.takeWhile} - take elements while a predicate is true
+     * - Mentioned in examples
+     *   - {@link Stream.range} - create a Stream of numbers
+     *   - {@link Stream.toArray} - collect Stream elements into an Array
      * */
     public take(n: number) {
         return new Stream(new Sequencer(take(this.sequencer, n)));
@@ -407,9 +444,16 @@ export class Stream<T> extends Sequencer<T> {
      *
      * @example Take the elements of a Stream while they are less than 3
      * ```ts
-     * const s = Stream.range(5).takeWhile(x => x < 3);
+     * const s = Stream.range(5).(x => x < 3);
      * console.log(s.toArray()); // [0, 1, 2]
      * ```
+     *
+     * @see
+     * - Similar operations
+     *   - {@link Stream.take} - take the first `n` elements of the Stream
+     * - Mentioned in examples
+     *   - {@link Stream.range} - create a Stream of numbers
+     *   - {@link Stream.toArray} - collect Stream elements into an Array
      * */
     public takeWhile(predicate: Predicate<T>) {
         return new Stream(new Sequencer(takeWhile(this.sequencer, predicate)));
@@ -428,9 +472,13 @@ export class Stream<T> extends Sequencer<T> {
      *
      * @example Enumerate the elements in a Stream
      * ```ts
-     * const s = Stream.range(5).enumerate();
-     * console.log(s.toArray()); // [[0, 0], [1, 1], [2, 2], [3, 3], [4, 4]]
+     * const s = Stream.from('abc').enumerate();
+     * console.log(s.toArray()); // [[0, "a"], [1, "b"], [2, "c"]]
      * ```
+     *
+     * @see
+     * - {@link Stream.range} - create a Stream of numbers
+     * - {@link Stream.toArray} - collect Stream elements into an Array
      * */
     public enumerate(): Stream<[number, T]> {
         return new Stream(new Sequencer(enumerate(this.sequencer)));
@@ -459,6 +507,11 @@ export class Stream<T> extends Sequencer<T> {
      * const s = Stream.from("hello").map(x => x.toUpperCase());
      * console.log(s.toArray()); // ["H", "E", "L", "L", "O"]
      * ```
+     *
+     * @see
+     * - {@link Stream.range} - create a Stream of numbers
+     * - {@link Stream.from} - create a Stream from an iterable
+     * - {@link Stream.toArray} - collect Stream elements into an Array
      */
     public map<U>(fn: Function<T, U>) {
         return new Stream(new Sequencer(map(this.sequencer, fn)));
@@ -481,6 +534,10 @@ export class Stream<T> extends Sequencer<T> {
      * const s = Stream.range(5).filter(x => x % 2 === 0);
      * console.log(s.toArray()); // [0, 2, 4]
      * ```
+     *
+     * @see
+     * - {@link Stream.range} - create a Stream of numbers
+     * - {@link Stream.toArray} - collect Stream elements into an Array
      */
     public filter(predicate: Predicate<T>) {
         return new Stream(new Sequencer(filter(this.sequencer, predicate)));
@@ -516,11 +573,18 @@ export class Stream<T> extends Sequencer<T> {
      * console.log(s.fold(1, (acc, x) => acc * x)); // 120
      * ```
      *
-     * @example agregate key-value pairs in a Stream into an object
+     * @example Aggregate key-value pairs in a Stream into an object
      * ```ts
      * const s = Stream.from([["a", 1], ["b", 2], ["c", 3]]);
      * console.log(s.fold({}, (acc, [k, v]) => ({...acc, [k]: v}))); // { a: 1, b: 2, c: 3 }
      * ```
+     * @see
+     * - Similar operations
+     *   - {@link Stream.reduce} - Similar to 'fold' but without an initial value
+     * - Mentioned in examples
+     *   - {@link Stream.range} - create a Stream of numbers
+     *   - {@link Stream.from} - create a Stream from an iterable
+     *
      * */
     public fold<U>(initial: U, fn: BiFunction<U, T, U>) {
         let acc = initial;
@@ -553,6 +617,10 @@ export class Stream<T> extends Sequencer<T> {
      * const s = Stream.range(3).map(x => Stream.range(x));
      * console.log(s.flatten().toArray()); // [0, 0, 1, 0, 1, 2]
      * ```
+     *
+     * @see
+     * - {@link Stream.from} - create a Stream from an iterable
+     * - {@link Stream.toArray} - collect Stream elements into an Array
      * */
     public flatten<U>(this: Stream<Iterable<U>>) {
         return new Stream(new Sequencer(flatten(this.sequencer)));
@@ -570,6 +638,17 @@ export class Stream<T> extends Sequencer<T> {
      * @param iterables Iterables to zip together
      *
      * @returns A new Stream containing tuples of the elements of the original iterables
+     *
+     * @example Zip two Streams together
+     * ```ts
+     * const s1 = Stream.range(5);
+     * const s2 = Stream.range(5, 10);
+     * const s = Stream.zip(s1, s2);
+     * console.log(s.toArray()); // [[0, 5], [1, 6], [2, 7], [3, 8], [4, 9]]
+     * ```
+     *
+     * @see
+     * - {@link Stream.toArray} - collect Stream elements into an Array
      *
      * @group Factories
      * */
@@ -600,6 +679,13 @@ export class Stream<T> extends Sequencer<T> {
      * const s = Stream.range(9).chunk(2);
      * console.log(s.toArray()); // [[0, 1], [2, 3], [4, 5], [6, 7], [8]]
      * ```
+     *
+     * @ see
+     * - Similar operations
+     *   - {@link Stream.slide}
+     * - Mentioned in examples
+     *   - {@link Stream.range} - create a Stream of numbers
+     *   - {@link Stream.toArray} - collect Stream elements into an Array
      * */
     public chunk(this: Stream<T>, n: number) {
         if (n <= 0) throw new ValueError("Stream.chunk(): n must be greater than zero");
@@ -621,6 +707,13 @@ export class Stream<T> extends Sequencer<T> {
      * const s = Stream.range(5).slide(3);
      * console.log(s.toArray()); // [[0, 1, 2], [1, 2, 3], [2, 3, 4]]
      * ```
+     *
+     * @see
+     * - Similar operations
+     *   - {@link Stream.chunk}
+     * - Mentioned in examples
+     *   - {@link Stream.range} - create a Stream of numbers
+     *   - {@link Stream.toArray} - collect Stream elements into an Array
      * */
     public slide(this: Stream<T>, n: number) {
         if (n <= 0) throw new ValueError("Stream.chunk(): n must be greater than zero");
@@ -656,6 +749,20 @@ export class Stream<T> extends Sequencer<T> {
      * const s2 = Stream.from("abb");
      * console.log(s1.compare(s2)); // -1
      * ```
+     *
+     * @see
+     * - Similar operations
+     *   - {@link Stream.compareBy}
+     *   - {@link Stream.eqBy}
+     *   - {@link Stream.eq}
+     *   - {@link Stream.ne}
+     *   - {@link Stream.lt}
+     *   - {@link Stream.le}
+     *   - {@link Stream.gt}
+     *   - {@link Stream.ge}
+     * - Mention in examples
+     *   - {@link Stream.range} - create a Stream of numbers
+     *   - {@link Stream.from} - create a Stream from an iterable
      * */
     public compare<U>(this: Stream<U>, other: Stream<U>) {
         const iterator1 = this.sequencer[Symbol.iterator]();
@@ -696,6 +803,20 @@ export class Stream<T> extends Sequencer<T> {
      * const s2 = Stream.from(["aa", "aaa", "aaaa"]);
      * console.log(s1.compareBy(s2, x => x.length)); // -1
      * ```
+     *
+     * @see
+     * - Similar operations
+     *   - {@link Stream.compare}
+     *   - {@link Stream.eqBy}
+     *   - {@link Stream.eq}
+     *   - {@link Stream.ne}
+     *   - {@link Stream.lt}
+     *   - {@link Stream.le}
+     *   - {@link Stream.gt}
+     *   - {@link Stream.ge}
+     * - Mentioned in examples
+     *   - {@link Stream.from} - create a Stream from an iterable
+     *   - {@link Stream.range} - create a Stream of numbers
      * */
     public compareBy<U>(this: Stream<T>, other: Stream<T>, fn: Function<T, U>) {
         return this.map(fn).compare(other.map(fn));
@@ -716,6 +837,19 @@ export class Stream<T> extends Sequencer<T> {
      * const s2 = Stream.range(5);
      * console.log(s1.eq(s2)); // true
      * ```
+     *
+     * @see
+     * - Similar operations
+     *   - {@link Stream.compare}
+     *   - {@link Stream.compareBy}
+     *   - {@link Stream.eqBy}
+     *   - {@link Stream.ne}
+     *   - {@link Stream.lt}
+     *   - {@link Stream.le}
+     *   - {@link Stream.gt}
+     *   - {@link Stream.ge}
+     * - Mentioned in examples
+     *   - {@link Stream.range} - create a Stream of numbers
      * */
     public eq(other: Stream<T>) {
         return this.compare(other) === 0;
@@ -738,6 +872,19 @@ export class Stream<T> extends Sequencer<T> {
      * const s2 = Stream.from(["aa", "aaa", "aaaa"]);
      * console.log(s1.eqBy(s2, x => x.length)); // false
      * ```
+     *
+     * @see
+     * - Similar operations
+     *   - {@link Stream.compare}
+     *   - {@link Stream.compareBy}
+     *   - {@link Stream.eq}
+     *   - {@link Stream.ne}
+     *   - {@link Stream.lt}
+     *   - {@link Stream.le}
+     *   - {@link Stream.gt}
+     *   - {@link Stream.ge}
+     * - Mentioned in examples
+     *   - {@link Stream.from} - create a Stream from an iterable
      * */
     public eqBy<U>(other: Stream<T>, fn: Function<T, U>) {
         return this.compareBy(other, fn) === 0;
@@ -758,6 +905,19 @@ export class Stream<T> extends Sequencer<T> {
      * const s2 = Stream.range(5);
      * console.log(s1.ne(s2)); // false
      * ```
+     *
+     * @see
+     * - Similar operations
+     *   - {@link Stream.compare}
+     *   - {@link Stream.compareBy}
+     *   - {@link Stream.eq}
+     *   - {@link Stream.eqBy}
+     *   - {@link Stream.lt}
+     *   - {@link Stream.le}
+     *   -  {@link Stream.gt}
+     *   - {@link Stream.ge}
+     * - Mentioned in examples
+     *   - {@link Stream.range} - create a Stream of numbers
      * */
     public ne(other: Stream<T>) {
         return this.compare(other) !== 0;
@@ -771,6 +931,17 @@ export class Stream<T> extends Sequencer<T> {
      * @returns `true` if the Streams are not equal, `false` otherwise
      *
      * @group Terminators
+     *
+     * @see
+     * - Similar operations
+     *   - {@link Stream.compare}
+     *   - {@link Stream.compareBy}
+     *   - {@link Stream.eqBy}
+     *   - {@link Stream.eq}
+     *   - {@link Stream.ne}
+     *   - {@link Stream.le}
+     *   - {@link Stream.gt}
+     *   - {@link Stream.ge}
      */
     public lt(other: Stream<T>) {
         return this.compare(other) < 0;
@@ -784,6 +955,17 @@ export class Stream<T> extends Sequencer<T> {
      * @returns `true` if the Streams are less than or equal, `false` otherwise
      *
      * @group Terminators
+     *
+     * @see Similar operations
+     * - {@link Stream.compare}
+     * - {@link Stream.compareBy}
+     * - {@link Stream.eqBy}
+     * - {@link Stream.eq}
+     * - {@link Stream.ne}
+     * - {@link Stream.lt}
+     * - {@link Stream.gt}
+     * - {@link Stream.ge}
+     *
      */
     public le(other: Stream<T>) {
         return this.compare(other) <= 0;
@@ -797,6 +979,16 @@ export class Stream<T> extends Sequencer<T> {
      * @returns `true` if the Streams are greater, `false` otherwise
      *
      * @group Terminators
+     *
+     * @see Similar operations
+     * - {@link Stream.compare}
+     * - {@link Stream.compareBy}
+     * - {@link Stream.eqBy}
+     * - {@link Stream.eq}
+     * - {@link Stream.ne}
+     * - {@link Stream.lt}
+     * - {@link Stream.le}
+     * - {@link Stream.ge}
      */
     public gt(other: Stream<T>) {
         return this.compare(other) > 0;
@@ -810,6 +1002,16 @@ export class Stream<T> extends Sequencer<T> {
      * @returns `true` if the Streams are greater than or equal, `false` otherwise
      *
      * @group Terminators
+     *
+     * @see Similar operations
+     * - {@link Stream.compare}
+     * - {@link Stream.compareBy}
+     * - {@link Stream.eqBy}
+     * - {@link Stream.eq}
+     * - {@link Stream.ne}
+     * - {@link Stream.lt}
+     * - {@link Stream.le}
+     * - {@link Stream.gt}
      */
     public ge(other: Stream<T>) {
         return this.compare(other) >= 0;
@@ -830,6 +1032,24 @@ export class Stream<T> extends Sequencer<T> {
      * const s = Stream.range(5);
      * console.log(s.isSorted()); // true
      * ```
+     *
+     * @example Check if a Stream of strings is sorted by length
+     * ```ts
+     * const s = Stream.from(["a", "aa", "aaa"]);
+     * console.log(s.isSortedBy(false, s=> s.length)); // true
+     * ```
+     *
+     * @example Check if a Stream is sorted in descending order
+     * ```ts
+     * const s = Stream.range(5, 0, -1);
+     * console.log(s.isSorted(true)); // true
+     * ```
+     *
+     * @see
+     * - Similar operations
+     *   - {@link Stream.isSortedBy}
+     * - Mentioned in examples
+     *   - {@link Stream.from} - create a Stream from an iterable
      * */
     public isSorted<U>(this: Stream<T>, reverse = false, key?: Function<T, U>): boolean {
         if (key) {
@@ -873,6 +1093,12 @@ export class Stream<T> extends Sequencer<T> {
      * const s = Stream.from(["a", "aa", "aaa"]);
      * console.log(s.isSortedBy(s=> s.length)); // true
      * ```
+     *
+     * @see
+     * - Similar operations
+     *   - {@link Stream.isSorted}
+     * - Mentioned in examples
+     *   - {@link Stream.from} - create a Stream from an iterable
      * */
     public isSortedBy(this: Stream<T>, fn: Comparator<T>, reverse: boolean = false): boolean {
         const iterator = this.sequencer[Symbol.iterator]();
@@ -916,6 +1142,11 @@ export class Stream<T> extends Sequencer<T> {
      * const s = Stream.range(3).chain([3, 4, 5]);
      * console.log(s.toArray()); // [0, 1, 2, 3, 4, 5]
      * ```
+     *
+     * @see
+     * - {@link Stream.range} - create a Stream of numbers
+     * - {@link Stream.toArray} - collect Stream elements into an Array
+     *
      * */
     public chain<U>(iterable: Iterable<U>) {
         const {sequencer} = this;
@@ -954,6 +1185,11 @@ export class Stream<T> extends Sequencer<T> {
      * console.log(factorial(5)); // 120
      * ```
      *
+     * @see
+     * - Similar operations
+     *   - {@link Stream.fold} - Similar to 'reduce' but with an initial value
+     * - Mentioned in examples
+     *   - {@link Stream.range} - create a Stream of numbers
      * */
     public reduce(fn: BiOperator<T>): T | undefined {
         const iterator = this.sequencer[Symbol.iterator]();
@@ -982,6 +1218,16 @@ export class Stream<T> extends Sequencer<T> {
      * const s = Stream.range(1, 20, 2);
      * console.log(s.sum()); // 100
      * ```
+     *
+     * @see
+     * - Similar operations
+     *   - {@link Stream.product}
+     *   - {@link Stream.max}
+     *   - {@link Stream.min}
+     * - Mentioned in examples
+     *   - {@link Stream.range} - create a Stream of numbers
+     *
+     *
      * */
     public sum(this: Stream<number>) {
         let acc = 0;
@@ -1004,6 +1250,14 @@ export class Stream<T> extends Sequencer<T> {
      * const s = Stream.range(1, 6);
      * console.log(s.product()); // 120
      * ```
+     * @see
+     * - Similar operations
+     *   - {@link Stream.sum}
+     *   - {@link Stream.max}
+     *   - {@link Stream.min}
+     * - Mentioned in examples
+     *   - {@link Stream.range} - create a Stream of numbers
+     *
      * */
     public product(this: Stream<number>) {
         let acc = 1;
@@ -1025,6 +1279,15 @@ export class Stream<T> extends Sequencer<T> {
      * const s = Stream.range(5);
      * console.log(s.max()); // 4
      * ```
+     *
+     * @see
+     * - Similar operations
+     *   - {@link Stream.sum}
+     *   - {@link Stream.product}
+     *   - {@link Stream.min}
+     * - Mentioned in examples
+     *   - {@link Stream.range} - create a Stream of numbers
+     *
      * */
     public max(this: Stream<number>) {
 
@@ -1043,6 +1306,15 @@ export class Stream<T> extends Sequencer<T> {
      * const s = Stream.range(5);
      * console.log(s.min()); // 0
      * ```
+     *
+     * @see
+     * - Similar operations
+     *   - {@link Stream.sum}
+     *   - {@link Stream.product}
+     *   - {@link Stream.max}
+     * - Mentioned in examples
+     *   - {@link Stream.range} - create a Stream of numbers
+     *
      * */
     public min(this: Stream<number>) {
         return this.reduce(Math.min);
@@ -1060,6 +1332,16 @@ export class Stream<T> extends Sequencer<T> {
      * const s = Stream.range(5);
      * console.log(s.count()); // 5
      * ```
+     *
+     * @example Count the elements that satisfy a predicate
+     * ```ts
+     * const s = Stream.range(5).filter(x => x % 2 === 0);
+     * console.log(s.count()); // 3
+     * ```
+     *
+     * @see
+     * - {@link Stream.range} - create a Stream of numbers
+     * - {@link Stream.filter} - filter the elements in a Stream by a predicate
      * */
     public count() {
         return this.fold(0, (acc, _) => acc + 1);
@@ -1086,6 +1368,9 @@ export class Stream<T> extends Sequencer<T> {
      * const s = Stream.from(["a", "b", "c"]);
      * console.log(s.join("-")); // "a-b-c"
      * ```
+     *
+     * @see
+     * - {@link Stream.from} - create a Stream from an iterable
      * */
     public join(this: Stream<string>, separator = "") {
         if (separator == "") {
@@ -1104,7 +1389,7 @@ export class Stream<T> extends Sequencer<T> {
      * @example Print the elements in a Stream
      * ```ts
      * const s = Stream.range(5);
-     * s.forEach(x => console.log(x));
+     * s.forEach(console.log);
      * // Output:
      * // 0
      * // 1
@@ -1112,6 +1397,9 @@ export class Stream<T> extends Sequencer<T> {
      * // 3
      * // 4
      * ```
+     *
+     * @see
+     * - {@link Stream.range} - create a Stream of numbers
      * */
     public forEach(fn: Consumer<T>) {
         for (const x of this.sequencer) fn(x);
@@ -1135,6 +1423,16 @@ export class Stream<T> extends Sequencer<T> {
      *      .map(x => x % 2 === 0);
      * console.log(s.all()); // true
      * ```
+     *
+     * @see
+     * - Similar operations
+     *  - {@link Stream.allMap}
+     *  - {@link Stream.any}
+     *  - {@link Stream.anyMap}
+     * - Mentioned in examples
+     *   - {@link Stream.range} - create a Stream of numbers
+     *   - {@link Stream.filter} - filter the elements in a Stream by a predicate
+     *   - {@link Stream.map} - transform the elements in a Stream using a function
      * */
     public all(this: Stream<boolean>) {
         const iterator = this.sequencer[Symbol.iterator]();
@@ -1166,6 +1464,16 @@ export class Stream<T> extends Sequencer<T> {
      * const s = Stream.range(5).filter(x => x % 2 === 0);
      * console.log(s.allMap(x => x % 2 === 0)); // true
      * ```
+     *
+     * @see
+     * - Similar operations
+     *   - {@link Stream.all}
+     *   - {@link Stream.any}
+     *   - {@link Stream.anyMap}
+     * - Mentioned in examples
+     *   - {@link Stream.range} - create a Stream of numbers
+     *   - {@link Stream.filter} - filter the elements in a Stream by a predicate
+     *   - {@link Stream.map} - transform the elements in a Stream using a function
      * */
     public allMap(this: Stream<T>, fn: (x: T) => boolean) {
         const iterator = this.sequencer[Symbol.iterator]();
@@ -1194,6 +1502,16 @@ export class Stream<T> extends Sequencer<T> {
      *      .map(x => x % 2 === 0);
      * console.log(s.any()); // true
      * ```
+     *
+     * @see
+     * - Similar operations
+     *   - {@link Stream.all}
+     *   - {@link Stream.allMap}
+     *   - {@link Stream.anyMap}
+     * - Mentioned in examples
+     *   - {@link Stream.range} - create a Stream of numbers
+     *   - {@link Stream.filter} - filter the elements in a Stream by a predicate
+     *   - {@link Stream.map} - transform the elements in a Stream using a function
      * */
     public any(this: Stream<boolean>) {
         const iterator = this.sequencer[Symbol.iterator]();
@@ -1225,6 +1543,15 @@ export class Stream<T> extends Sequencer<T> {
      * const s = Stream.range(5).filter(x => x % 2 === 0);
      * console.log(s.anyMap(x => x % 2 === 0)); // false
      * ```
+     *
+     * @see
+     * - Similar operations
+     *   - {@link Stream.all}
+     *   - {@link Stream.allMap}
+     *   - {@link Stream.any}
+     * - Mentioned in examples
+     *   - {@link Stream.range} - create a Stream of numbers
+     *   - {@link Stream.filter} - filter the elements in a Stream by a predicate
      * */
     public anyMap(this: Stream<T>, fn: (x: T) => boolean) {
         const iterator = this.sequencer[Symbol.iterator]();
@@ -1253,6 +1580,10 @@ export class Stream<T> extends Sequencer<T> {
      * const x = Stream.range(20, Infinity).findFirst(isPrime);
      * console.log(x); // 23
      * ```
+     *
+     * @see
+     * - {@link Stream.range} - create a Stream of numbers
+     * - {@link https://www.npmjs.com/package/is-prime-number | `is-prime-number`} - prime number checker library
      * */
     public findFirst(predicate: (x: T) => boolean): T | undefined {
         for (const x of this.sequencer) {
@@ -1276,9 +1607,12 @@ export class Stream<T> extends Sequencer<T> {
      * @example Find the last prime number smaller than 20
      * ```ts
      * const isPrime = require('is-prime-number'); // npm install is-prime-number
-     * const x = Stream.range(0, 20).findLast(isPrime);
+     * const x = Stream.range(20).findLast(isPrime);
      * console.log(x); // 19
      * ```
+     *
+     * @see
+     * - {@link Stream.range} - create a Stream of numbers
      * */
     public findLast(predicate: (x: T) => boolean): T | undefined {
         let result: T | undefined = undefined;

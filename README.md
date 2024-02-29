@@ -28,7 +28,7 @@ Library is heavily tested with Jest.
 ## Examples
 
 ```typescript
-import { Stream } from 'streams-ts';
+import {Stream} from 'streams-ts';
 
 const arr = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
@@ -49,7 +49,7 @@ console.log(result2); // 60
 const result3 = Stream.from(arr)
     .filter(x => x % 2 === 0)
     .map(x => x * 2)
-    .findFirst();
+    .findFirst((_) => true);
 
 console.log(result3); // 4
 

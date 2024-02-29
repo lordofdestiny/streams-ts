@@ -1,7 +1,6 @@
 /* istanbul ignore file */
 
 /**
- * @external
  * Error that is thrown when a Stream method is called with an invalid number of arguments
  * */
 export class ArgumentCountError extends Error {
@@ -22,7 +21,9 @@ export class ArgumentCountError extends Error {
 }
 
 
-
+/**
+ * Error that is thrown when a Stream method is called with an invalid argument
+ * */
 export class ValueError extends Error {
     constructor(message: string) {
         super(message);
