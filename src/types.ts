@@ -86,3 +86,16 @@ export type BiOperator<T> = BiFunction<T, T, T>;
  * ```
  * */
 export type UnaryOperator<T> = Function<T, T>;
+
+
+/**
+ * Type of the rest arguments of a function.
+ * Use:
+ *
+ * ```ts
+ * function foo<T extends any[]>(...args: RestArguments<T>) {
+ *  // ...;
+ * }
+ * ```
+ * */
+export type RestArguments<T> = { [I in keyof T]: Iterable<T[I]> }

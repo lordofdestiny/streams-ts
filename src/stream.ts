@@ -1,20 +1,23 @@
-import {ArgumentCountError, ValueError} from "~/errors";
+import {ArgCountError, ArgTypeError, ArgValueError} from "~/errors";
 import {
     chunk,
     enumerate,
     filter,
-    flatten, iterate,
+    flatten,
+    iterate,
     map,
     rangeStartStopStep,
     rangeZeroToN,
     repeat,
-    skip, slide,
+    skip,
+    slide,
     take,
-    takeWhile, zip
+    takeWhile,
+    zip,
 } from "~/generators";
 import {Sequencer} from "~/sequencer";
-import type {Predicate, Function, BiFunction, Comparator, BiOperator, Consumer, UnaryOperator} from "~/types";
-
+import type {BiFunction, BiOperator, Comparator, Consumer, Function, Predicate, UnaryOperator,} from "~/types";
+import {isIterable} from "~/util";
 
 /** A Stream is a sequence of values that can be manipulated using a variety of methods. Streams are
  * created from iterables, arrays, or using the `range`, `repeat` and other factory methods.
@@ -58,6 +61,12 @@ export class Stream<T> extends Sequencer<T> {
      * resulting Stream.
      *
      * @param iterable
+     *
+     * @returns A Stream of the elements in the iterable
+     *
+     * @throws
+     * - {@link ArgTypeError} if the iterable is not an iterable
+     * - {@link ArgCountError} if the number of arguments is not 1
      *
      * @example Create a Stream from an array
      * ```ts
@@ -111,6 +120,12 @@ export class Stream<T> extends Sequencer<T> {
      * @group Factories
      * */
     public static from<T>(iterable: Iterable<T>) {
+        if (arguments.length !== 1) {
+            throw new ArgCountError(this.from, arguments.length);
+        }
+        if (!isIterable(iterable)) {
+            throw new ArgTypeError("argument must be an iterable", Stream.from);
+        }
         return new Stream<T>(new Sequencer(iterable));
     }
 
@@ -120,6 +135,7 @@ export class Stream<T> extends Sequencer<T> {
      * @typeParam T The type of the elements in the Stream
      *
      * @param values The values to create the Stream from
+     * @returns A Stream of the values
      *
      * @example Create a Stream from variadic arguments
      * ```ts
@@ -136,7 +152,7 @@ export class Stream<T> extends Sequencer<T> {
      * @group Factories
      *
      * @see
-     * - {@link Stream.toArray} - collect Stream elements into an Array
+     * - {@link toArray | Stream.toArray} - collect Stream elements into an Array
      * */
     public static of<T>(...values: T[]) {
         return new Stream<T>(new Sequencer(values));
@@ -146,6 +162,10 @@ export class Stream<T> extends Sequencer<T> {
      * @param stop The end of the range
      *
      * @returns A Stream of numbers from 0 to `stop` (exclusive)
+     *
+     * @throws
+     * - {@link ArgTypeError} if `stop` is not a number
+     * - {@link ArgCountError} if the number of arguments is not 1
      *
      * @example Create a Stream of numbers in range [0, 5)
      * ```ts
@@ -164,8 +184,6 @@ export class Stream<T> extends Sequencer<T> {
      * @param stop The end of the range
      * @param step The step between each number in the range
      *
-     * @throws ValueError if `step` is zero
-     *
      * @returns
      * - A Stream of numbers from `start` to `stop` (exclusive) with a step of `step`,
      * if step is positive.
@@ -175,8 +193,12 @@ export class Stream<T> extends Sequencer<T> {
      *
      * - Empty Stream if `start` and `stop` are equal.
      *
-     * @example Create a Stream of numbers in range [1, 6)
+     * @throws
+     * - {@link ArgValueError} if `step` is zero
+     * - {@link ArgTypeError} if `start`, `stop` or `step` are not numbers
+     * - {@link ArgCountError} if the number of arguments 2 or 3
      *
+     * @example Create a Stream of numbers in range [1, 6)
      * ```ts
      * const s = Stream.range(1, 6);
      * console.log(s.toArray()); // [1, 2, 3, 4, 5]
@@ -202,27 +224,43 @@ export class Stream<T> extends Sequencer<T> {
      *
      * @group Factories
      * */
-    public static range(start: number, stop: number, step?: number): Stream<number>;
+    public static range(start: number, stop: number, step?: number,): Stream<number>;
     public static range(bound1: number, bound2: number = Infinity, step = 1) {
         if (arguments.length < 1 || arguments.length > 3) {
-            throw new ArgumentCountError(this.range, arguments.length);
+            throw new ArgCountError(this.range, arguments.length);
+        }
+
+        // @ts-ignore
+        if (typeof (bound1 as any) !== "number" || Number.isNaN(bound1) ||
+            typeof (bound2 as any) !== "number" || Number.isNaN(bound2) ||
+            typeof (step as any) !== "number" || Number.isNaN(step)
+        ) {
+            throw new ArgTypeError(
+                "start, stop and step must be numbers",
+                Stream.range,
+            );
         }
 
         if (step == 0) {
-            throw new ValueError("Stream.range(): step must not be zero")
+            throw new ArgValueError("step must not be zero", Stream.range);
         }
 
         if (arguments.length === 1) {
             return new Stream<number>(new Sequencer(rangeZeroToN(bound1)));
         }
 
-        return new Stream<number>(new Sequencer(rangeStartStopStep(bound1, bound2, step)));
+        return new Stream<number>(
+            new Sequencer(rangeStartStopStep(bound1, bound2, step)),
+        );
     }
 
     /**
      * @typeParam T The type of the elements in the Stream
      *
      * @returns An empty Stream
+     *
+     * @throws
+     *  - {@link ArgCountError} if the number of arguments is not 0
      *
      * @group Factories
      *
@@ -231,40 +269,49 @@ export class Stream<T> extends Sequencer<T> {
      * console.log(Stream.empty().toArray()); // []
      * */
     public static empty<T>() {
+        if (arguments.length !== 0) {
+            throw new ArgCountError(Stream.empty, arguments.length);
+        }
         return new Stream<T>(new Sequencer([]));
     }
 
+    /**
+     * Repeats a value indefinitely. The Stream will never be exhausted.
+     * If try to consume the Stream, it will run forever. You can use the {@link Stream.take} method to
+     * limit the number of elements.
+     *
+     * @typeParam T The type of the elements in the Stream
+     *
+     * @param value The value to repeat
+     *
+     * @returns A Stream of the repeated value
+     *
+     * @throws
+     * - {@link ArgCountError} if the number of arguments is not 1
+     *
+     * @example Infinite Stream of 1s
+     * ```ts
+     * for(const x of Stream.repeat(1)) {
+     *    console.log(x);
+     * }
+     * // Output: 1 1 1 1 1 ...
+     * ```
+     *
+     * @example Take the first 5 elements of the infinite Stream
+     * ```ts
+     * const s = Stream.repeat(5).take(5);
+     * console.log(s.toArray()); // [5, 5, 5, 5, 5]
+     *```
+     *
+     * @see
+     * - {@link Stream.take} - take up to `n` of elements first elements of the Stream
+     *
+     * @group Factories
+     * */
     public static repeat<T>(value: T) {
-        /**
-         * Repeats a value indefinitely. The Stream will never be exhausted.
-         * If try to consume the Stream, it will run forever. You can use the {@link Stream.take} method to
-         * limit the number of elements.
-         *
-         * @typeParam T The type of the elements in the Stream
-         *
-         * @param value The value to repeat
-         *
-         * @returns A Stream of the repeated value
-         *
-         * @example Infinite Stream of 1s
-         * ```ts
-         * for(const x of Stream.repeat(1)) {
-         *    console.log(x);
-         * }
-         * // Output: 1 1 1 1 1 ...
-         * ```
-         *
-         * @example Take the first 5 elements of the infinite Stream
-         * ```ts
-         * const s = Stream.repeat(5).take(5);
-         * console.log(s.toArray()); // [5, 5, 5, 5, 5]
-         *```
-         *
-         * @see
-         * - {@link Stream.take} - take up to `n` of elements first elements of the Stream
-         *
-         * @group Factories
-         * */
+        if (arguments.length !== 1) {
+            throw new ArgCountError(Stream.repeat, arguments.length);
+        }
         return new Stream<T>(new Sequencer(repeat(value)));
     }
 
@@ -281,6 +328,10 @@ export class Stream<T> extends Sequencer<T> {
      *
      * @returns A Stream of the generated values
      *
+     * @throws
+     * - {@link ArgTypeError} if `fn` is not a function
+     * - {@link ArgCountError} if the number of arguments is not 2
+     *
      * @group Factories
      *
      * @example Infinite Stream of powers of 2
@@ -293,6 +344,12 @@ export class Stream<T> extends Sequencer<T> {
      * ```
      * */
     public static iterate<T>(init: T, fn: UnaryOperator<T>) {
+        if (arguments.length !== 2) {
+            throw new ArgCountError(this.iterate, arguments.length);
+        }
+        if (typeof fn !== "function") {
+            throw new ArgTypeError("fn must be a function", Stream.iterate);
+        }
         return new Stream<T>(new Sequencer(iterate(init, fn)));
     }
 
@@ -301,6 +358,9 @@ export class Stream<T> extends Sequencer<T> {
      * If the Stream is infinite, this will produce an infinite loop.
      *
      * @returns An array of the elements in the Stream
+     *
+     * @throws
+     * - {@link ArgCountError} if the number of arguments is not 0
      *
      * @example Convert a Stream to an array
      * ```ts
@@ -311,6 +371,9 @@ export class Stream<T> extends Sequencer<T> {
      * @group Collectors
      * */
     public toArray() {
+        if (arguments.length !== 0) {
+            throw new ArgCountError(this.toArray, arguments.length);
+        }
         return [...this.sequencer];
     }
 
@@ -324,16 +387,19 @@ export class Stream<T> extends Sequencer<T> {
      * Typescript tuples are expected, that is, an array of length 2,
      * where the first element is the key and the second element is the value.
      *
-     * If the Stream element type is not a tuple, a TypeError will be thrown during consumption.
-     *
      * @typeParam K The type of the keys in the Map
      * @typeParam V The type of the values in the Map
      *
-     * @throws TypeError if the Stream element type is not a tuple
-     * This is only enforced in compile time if the Stream is typed properly.
-     * The runtime check is not done prior to consumption.
-     * so the error will be thrown during consumption. Use with caution with
-     * {@link Stream.chain}, as it enables chaining streams of different types.
+     * @throws
+     *
+     * - {@link ArgTypeError} If the Stream element type is not a tuple
+     *
+     *   This is only enforced in compile time if the Stream is typed properly.
+     *   The runtime check is not done prior to consumption.
+     *   so the error will be thrown during consumption. Use with caution with
+     *   {@link Stream.chain}, as it enables chaining streams of different types.
+     *
+     * - {@link ArgCountError} if the number of arguments is not 0
      *
      * @returns A Map constructed from the elements in the Stream
      *
@@ -346,11 +412,17 @@ export class Stream<T> extends Sequencer<T> {
      * ```
      * */
     public toMap<K, V>(this: Stream<[K, V]>) {
+        if (arguments.length !== 0) {
+            throw new ArgCountError(this.toMap, arguments.length);
+        }
         try {
             return new Map(this.sequencer);
         } catch (e) {
             if (e instanceof TypeError) {
-                throw new TypeError("Stream.toMap() requires a stream of key-value pairs");
+                throw new ArgTypeError(
+                    "values in the stream  must be key-value pairs arrays",
+                    this.toMap,
+                );
             }
             /* istanbul ignore next */
             throw e;
@@ -364,6 +436,9 @@ export class Stream<T> extends Sequencer<T> {
      *
      * @returns A Set constructed from the elements in the Stream
      *
+     * @throws
+     * - {@link ArgCountError} if the number of arguments is not 0
+     *
      * @group Collectors
      *
      * @example Convert a Stream to a Set
@@ -373,6 +448,9 @@ export class Stream<T> extends Sequencer<T> {
      * ```
      * */
     public toSet() {
+        if (arguments.length !== 0) {
+            throw new ArgCountError(this.toSet, arguments.length);
+        }
         return new Set(this.sequencer);
     }
 
@@ -383,6 +461,11 @@ export class Stream<T> extends Sequencer<T> {
      * @param n The number of elements to skip
      *
      * @returns A new Stream with the first `n` elements of the original Stream skipped.
+     *
+     * @throws
+     * - {@link ArgValueError} if `n` is less than zero
+     * - {@link ArgTypeError} if `n` is not a number
+     * - {@link ArgCountError} if the number of arguments is not 1
      *
      * @group Transformers
      *
@@ -401,6 +484,18 @@ export class Stream<T> extends Sequencer<T> {
      *   - {@link Stream.toArray} - collect Stream elements into an Array
      * */
     public skip(n: number) {
+        if (arguments.length !== 1) {
+            throw new ArgCountError(this.skip, arguments.length);
+        }
+        if (typeof (n as any) !== "number") {
+            throw new ArgTypeError("n must be a number", this.skip);
+        }
+        if (n < 0) {
+            throw new ArgValueError(
+                "n must be greater than or equal to zero",
+                this.skip,
+            );
+        }
         return new Stream(new Sequencer(skip(this.sequencer, n)));
     }
 
@@ -410,6 +505,10 @@ export class Stream<T> extends Sequencer<T> {
      * @param n The number of elements to take
      *
      * @returns A new Stream with the first `n` elements of the original Stream.
+     *
+     * @throws
+     * - {@link ArgValueError} if `n` is less than zero
+     * - {@link ArgCountError} if the number of arguments is not 1
      *
      * @group Transformers
      *
@@ -428,6 +527,18 @@ export class Stream<T> extends Sequencer<T> {
      *   - {@link Stream.toArray} - collect Stream elements into an Array
      * */
     public take(n: number) {
+        if (arguments.length !== 1) {
+            throw new ArgCountError(this.take, arguments.length);
+        }
+        if (typeof (n as any) !== "number") {
+            throw new ArgTypeError("n must be a number", this.take);
+        }
+        if (n < 0) {
+            throw new ArgValueError(
+                "n must be greater than or equal to zero",
+                this.skip,
+            );
+        }
         return new Stream(new Sequencer(take(this.sequencer, n)));
     }
 
@@ -439,6 +550,10 @@ export class Stream<T> extends Sequencer<T> {
      * @param predicate Function used to test each element in the Stream
      *
      * @returns A new Stream that contains all the elements of the original Stream,
+     *
+     * @throws
+     * - {@link ArgTypeError} if `predicate` is not a function
+     * - {@link ArgCountError} if the number of arguments is not 1
      *
      * @group Transformers
      *
@@ -456,6 +571,12 @@ export class Stream<T> extends Sequencer<T> {
      *   - {@link Stream.toArray} - collect Stream elements into an Array
      * */
     public takeWhile(predicate: Predicate<T>) {
+        if (arguments.length !== 1) {
+            throw new ArgCountError(this.takeWhile, arguments.length);
+        }
+        if (typeof predicate !== "function") {
+            throw new ArgTypeError("predicate must be a function", this.takeWhile);
+        }
         return new Stream(new Sequencer(takeWhile(this.sequencer, predicate)));
     }
 
@@ -467,6 +588,9 @@ export class Stream<T> extends Sequencer<T> {
      * where the first element of the tuple is the index
      *
      * @returns A new Stream of tuples, where the first element of the tuple is the index
+     *
+     * @throws
+     * - {@link ArgCountError} if the number of arguments is not 0
      *
      * @group Transformers
      *
@@ -481,6 +605,9 @@ export class Stream<T> extends Sequencer<T> {
      * - {@link Stream.toArray} - collect Stream elements into an Array
      * */
     public enumerate(): Stream<[number, T]> {
+        if (arguments.length !== 0) {
+            throw new ArgCountError(this.enumerate, arguments.length);
+        }
         return new Stream(new Sequencer(enumerate(this.sequencer)));
     }
 
@@ -493,6 +620,10 @@ export class Stream<T> extends Sequencer<T> {
      * @param fn The function to apply to each element in the Stream
      *
      * @returns A new Stream where each element of type `U`
+     *
+     * @throws
+     * - {@link ArgTypeError} if `fn` is not a function
+     * - {@link ArgCountError} if the number of arguments is not 1
      *
      * @group Transformers
      *
@@ -514,6 +645,12 @@ export class Stream<T> extends Sequencer<T> {
      * - {@link Stream.toArray} - collect Stream elements into an Array
      */
     public map<U>(fn: Function<T, U>) {
+        if (arguments.length !== 1) {
+            throw new ArgCountError(this.map, arguments.length);
+        }
+        if (typeof fn !== "function") {
+            throw new ArgTypeError("fn must be a function", this.map);
+        }
         return new Stream(new Sequencer(map(this.sequencer, fn)));
     }
 
@@ -524,6 +661,10 @@ export class Stream<T> extends Sequencer<T> {
      * @typeParam U The type of the elements in the new Stream
      *
      * @param predicate The function to apply to each element in the Stream
+     *
+     * @throws
+     * - {@link ArgTypeError} if `predicate` is not a function
+     * - {@link ArgCountError} if the number of arguments is not 1
      *
      * @returns A new Stream where each element of type `U`
      *
@@ -540,6 +681,12 @@ export class Stream<T> extends Sequencer<T> {
      * - {@link Stream.toArray} - collect Stream elements into an Array
      */
     public filter(predicate: Predicate<T>) {
+        if (arguments.length !== 1) {
+            throw new ArgCountError(this.filter, arguments.length);
+        }
+        if (typeof predicate !== "function") {
+            throw new ArgTypeError("predicate must be a function", this.filter);
+        }
         return new Stream(new Sequencer(filter(this.sequencer, predicate)));
     }
 
@@ -553,6 +700,10 @@ export class Stream<T> extends Sequencer<T> {
      * For each element, the function is called with the accumulator and the element as arguments.
      *
      * @returns The result of the reduction
+     *
+     * @throws
+     * - {@link ArgTypeError} if `fn` is not a function
+     * - {@link ArgCountError} if the number of arguments is not 2
      *
      * @remarks
      *
@@ -587,6 +738,12 @@ export class Stream<T> extends Sequencer<T> {
      *
      * */
     public fold<U>(initial: U, fn: BiFunction<U, T, U>) {
+        if (arguments.length !== 2) {
+            throw new ArgCountError(this.fold, arguments.length);
+        }
+        if (typeof fn !== "function") {
+            throw new ArgTypeError("fn must be a function", this.fold);
+        }
         let acc = initial;
         for (const x of this.sequencer) {
             acc = fn(acc, x);
@@ -603,6 +760,9 @@ export class Stream<T> extends Sequencer<T> {
      * @typeParam U The type of the elements in the iterables
      *
      * @returns A new Stream containing all the elements of the original Stream of iterables
+     *
+     * @throws
+     *  - {@link ArgCountError} if the number of arguments is not 0
      *
      * @group Transformers
      *
@@ -623,6 +783,9 @@ export class Stream<T> extends Sequencer<T> {
      * - {@link Stream.toArray} - collect Stream elements into an Array
      * */
     public flatten<U>(this: Stream<Iterable<U>>) {
+        if (arguments.length !== 0) {
+            throw new ArgCountError(this.flatten, arguments.length);
+        }
         return new Stream(new Sequencer(flatten(this.sequencer)));
     }
 
@@ -639,6 +802,10 @@ export class Stream<T> extends Sequencer<T> {
      *
      * @returns A new Stream containing tuples of the elements of the original iterables
      *
+     * @throws
+     * - {@link ArgTypeError} if the arguments are not iterables
+     * - {@link ArgCountError} if the number of arguments is zero
+     *
      * @example Zip two Streams together
      * ```ts
      * const s1 = Stream.range(5);
@@ -652,7 +819,13 @@ export class Stream<T> extends Sequencer<T> {
      *
      * @group Factories
      * */
-    public static zip<T extends Array<any>>(...iterables: { [I in keyof T]: Iterable<T[I]> }): Stream<T> {
+    public static zip<T extends any[]>(...iterables: { [I in keyof T]: Iterable<T[I]> }): Stream<T> {
+        if (arguments.length === 0) {
+            throw new ArgCountError(this.zip, arguments.length);
+        }
+        if (iterables.some((iterable) => !isIterable(iterable))) {
+            throw new ArgTypeError("one or more arguments are not iterable", this.zip);
+        }
         return new Stream(new Sequencer(zip<T>(iterables)));
     }
 
@@ -665,8 +838,12 @@ export class Stream<T> extends Sequencer<T> {
      *
      * @returns A new Stream containing arrays of the elements of the original Stream
      *
-     * @group Transformers
+     * @throws
+     * - {@link ArgValueError} if `n` is less than or equal to zero
+     * - {@link ArgTypeError} if `n` is not a number
+     * - {@link ArgCountError} if the number of arguments is not 1
      *
+     * @group Transformers
      *
      * @example Chunk a Stream into arrays of size 3
      * ```ts
@@ -688,7 +865,15 @@ export class Stream<T> extends Sequencer<T> {
      *   - {@link Stream.toArray} - collect Stream elements into an Array
      * */
     public chunk(this: Stream<T>, n: number) {
-        if (n <= 0) throw new ValueError("Stream.chunk(): n must be greater than zero");
+        if (arguments.length !== 1) {
+            throw new ArgCountError(this.chunk, arguments.length);
+        }
+        if (typeof (n as any) !== "number") {
+            throw new ArgTypeError("n must be a number", this.chunk);
+        }
+        if (n <= 0) {
+            throw new ArgValueError("must be greater than zero", this.chunk);
+        }
         return new Stream(new Sequencer(chunk(this.sequencer, n)));
     }
 
@@ -701,6 +886,11 @@ export class Stream<T> extends Sequencer<T> {
      * @returns A new Stream containing arrays of the elements of the original Stream
      *
      * @group Transformers
+     *
+     * @throws
+     * - {@link ArgTypeError} if `n` is not a number
+     * - {@link ArgValueError} if `n` is less than or equal to zero
+     * - {@link ArgCountError} if the number of arguments is not 1
      *
      * @example Slide a window of size 3 over a Stream
      * ```ts
@@ -716,7 +906,18 @@ export class Stream<T> extends Sequencer<T> {
      *   - {@link Stream.toArray} - collect Stream elements into an Array
      * */
     public slide(this: Stream<T>, n: number) {
-        if (n <= 0) throw new ValueError("Stream.chunk(): n must be greater than zero");
+        if (arguments.length !== 1) {
+            throw new ArgCountError(this.slide, arguments.length);
+        }
+        if (typeof (n as any) !== "number") {
+            throw new ArgTypeError("n must be a number", this.slide);
+        }
+        if (n <= 0) {
+            throw new ArgValueError(
+                "Stream.chunk(): n must be greater than zero",
+                this.chunk,
+            );
+        }
         return new Stream(new Sequencer(slide(this, n)));
     }
 
@@ -728,6 +929,10 @@ export class Stream<T> extends Sequencer<T> {
      * @typeParam U The type of the elements in the other Stream
      *
      * @param other The other Stream to compare with
+     *
+     * @throws
+     * - {@link ArgTypeError} if `other` is not a Stream
+     * - {@link ArgCountError} if the number of arguments is not 1
      *
      * @returns
      * - 0 if this Stream is equal to the other Stream
@@ -765,6 +970,12 @@ export class Stream<T> extends Sequencer<T> {
      *   - {@link Stream.from} - create a Stream from an iterable
      * */
     public compare<U>(this: Stream<U>, other: Stream<U>) {
+        if (arguments.length !== 1) {
+            throw new ArgCountError(this.compare, arguments.length);
+        }
+        if (!(other instanceof Stream)) {
+            throw new ArgTypeError("other must be a Stream", this.compare);
+        }
         const iterator1 = this.sequencer[Symbol.iterator]();
         const iterator2 = other.sequencer[Symbol.iterator]();
         while (true) {
@@ -790,10 +1001,16 @@ export class Stream<T> extends Sequencer<T> {
      * @param other The other Stream to compare with
      * @param fn The function to extract the key by which to compare the elements
      *
+     *
      * @returns
      * - 0 if this Stream is equal to the other Stream
      * - -1 if this Stream is less than the other Stream
      * - 1 if this Stream is greater than the other Stream
+     *
+     * @throws
+     * - {@link ArgTypeError} if `other` is not a Stream
+     * - {@link ArgTypeError} if `fn` is not a function
+     * - {@link ArgCountError} if the number of arguments is not 2
      *
      * @group Terminators
      *
@@ -819,6 +1036,12 @@ export class Stream<T> extends Sequencer<T> {
      *   - {@link Stream.range} - create a Stream of numbers
      * */
     public compareBy<U>(this: Stream<T>, other: Stream<T>, fn: Function<T, U>) {
+        if (arguments.length !== 2) {
+            throw new ArgCountError(this.compareBy, arguments.length);
+        }
+        if (!(other instanceof Stream)) {
+            throw new ArgTypeError("other must be a Stream", this.compareBy);
+        }
         return this.map(fn).compare(other.map(fn));
     }
 
@@ -828,6 +1051,10 @@ export class Stream<T> extends Sequencer<T> {
      * @param other The other Stream to compare with
      *
      * @returns `true` if the Streams are equal, `false` otherwise
+     *
+     * @throws
+     * - {@link ArgTypeError} if `other` is not a Stream
+     * - {@link ArgCountError} if the number of arguments is not 1
      *
      * @group Terminators
      *
@@ -852,6 +1079,12 @@ export class Stream<T> extends Sequencer<T> {
      *   - {@link Stream.range} - create a Stream of numbers
      * */
     public eq(other: Stream<T>) {
+        if (arguments.length != 1) {
+            throw new ArgCountError(this.eq, arguments.length);
+        }
+        if (!(other instanceof Stream)) {
+            throw new ArgTypeError("other must be a Stream", this.eq);
+        }
         return this.compare(other) === 0;
     }
 
@@ -863,6 +1096,11 @@ export class Stream<T> extends Sequencer<T> {
      * @param fn The function to extract the key by which to compare the elements
      *
      * @returns `true` if the Streams are equal, `false` otherwise
+     *
+     * @throws
+     * - {@link ArgTypeError} if `other` is not a Stream
+     * - {@link ArgTypeError} if `fn` is not a function
+     * - {@link ArgCountError} if the number of arguments is not 2
      *
      * @group Terminators
      *
@@ -887,6 +1125,15 @@ export class Stream<T> extends Sequencer<T> {
      *   - {@link Stream.from} - create a Stream from an iterable
      * */
     public eqBy<U>(other: Stream<T>, fn: Function<T, U>) {
+        if (arguments.length != 2) {
+            throw new ArgCountError(this.eqBy, arguments.length);
+        }
+        if (!(other instanceof Stream)) {
+            throw new ArgTypeError("other must be a Stream", this.eqBy);
+        }
+        if (typeof fn !== "function") {
+            throw new ArgTypeError("fn must be a function", this.eqBy);
+        }
         return this.compareBy(other, fn) === 0;
     }
 
@@ -896,6 +1143,10 @@ export class Stream<T> extends Sequencer<T> {
      * @param other The other Stream to compare with
      *
      * @returns `true` if the Streams are not equal, `false` otherwise
+     *
+     * @throws
+     * - {@link ArgTypeError} if `other` is not a Stream
+     * - {@link ArgCountError} if the number of arguments is not 1
      *
      * @group Terminators
      *
@@ -914,12 +1165,18 @@ export class Stream<T> extends Sequencer<T> {
      *   - {@link Stream.eqBy}
      *   - {@link Stream.lt}
      *   - {@link Stream.le}
-     *   -  {@link Stream.gt}
+     *   - {@link Stream.gt}
      *   - {@link Stream.ge}
      * - Mentioned in examples
      *   - {@link Stream.range} - create a Stream of numbers
      * */
     public ne(other: Stream<T>) {
+        if (arguments.length != 1) {
+            throw new ArgCountError(this.ne, arguments.length);
+        }
+        if (!(other instanceof Stream)) {
+            throw new ArgTypeError("other must be a Stream", this.ne);
+        }
         return this.compare(other) !== 0;
     }
 
@@ -929,6 +1186,10 @@ export class Stream<T> extends Sequencer<T> {
      * @param other The other Stream to compare with
      *
      * @returns `true` if the Streams are not equal, `false` otherwise
+     *
+     * @throws
+     * - {@link ArgTypeError} if `other` is not a Stream
+     * - {@link ArgTypeError} if `fn` is not a function
      *
      * @group Terminators
      *
@@ -944,6 +1205,12 @@ export class Stream<T> extends Sequencer<T> {
      *   - {@link Stream.ge}
      */
     public lt(other: Stream<T>) {
+        if (arguments.length != 1) {
+            throw new ArgCountError(this.lt, arguments.length);
+        }
+        if (!(other instanceof Stream)) {
+            throw new ArgTypeError("other must be a Stream", this.lt);
+        }
         return this.compare(other) < 0;
     }
 
@@ -953,6 +1220,10 @@ export class Stream<T> extends Sequencer<T> {
      * @param other The other Stream to compare with
      *
      * @returns `true` if the Streams are less than or equal, `false` otherwise
+     *
+     * @throws
+     * - {@link ArgTypeError} if `other` is not a Stream
+     * - {@link ArgCountError} if the number of arguments is not 1
      *
      * @group Terminators
      *
@@ -968,6 +1239,12 @@ export class Stream<T> extends Sequencer<T> {
      *
      */
     public le(other: Stream<T>) {
+        if (arguments.length != 1) {
+            throw new ArgCountError(this.le, arguments.length);
+        }
+        if (!(other instanceof Stream)) {
+            throw new ArgTypeError("other must be a Stream", this.le);
+        }
         return this.compare(other) <= 0;
     }
 
@@ -977,6 +1254,10 @@ export class Stream<T> extends Sequencer<T> {
      * @param other The other Stream to compare with
      *
      * @returns `true` if the Streams are greater, `false` otherwise
+     *
+     * @throws
+     * - {@link ArgTypeError} if `other` is not a Stream
+     * - {@link ArgCountError} if the number of arguments is not 1
      *
      * @group Terminators
      *
@@ -991,6 +1272,12 @@ export class Stream<T> extends Sequencer<T> {
      * - {@link Stream.ge}
      */
     public gt(other: Stream<T>) {
+        if (arguments.length != 1) {
+            throw new ArgCountError(this.gt, arguments.length);
+        }
+        if (!(other instanceof Stream)) {
+            throw new ArgTypeError("other must be a Stream", this.gt);
+        }
         return this.compare(other) > 0;
     }
 
@@ -1000,6 +1287,10 @@ export class Stream<T> extends Sequencer<T> {
      * @param other The other Stream to compare with
      *
      * @returns `true` if the Streams are greater than or equal, `false` otherwise
+     *
+     * @throws
+     * - {@link ArgTypeError} if `other` is not a Stream
+     * - {@link ArgCountError} if the number of arguments is not 1
      *
      * @group Terminators
      *
@@ -1014,6 +1305,12 @@ export class Stream<T> extends Sequencer<T> {
      * - {@link Stream.gt}
      */
     public ge(other: Stream<T>) {
+        if (arguments.length != 1) {
+            throw new ArgCountError(this.ge, arguments.length);
+        }
+        if (!(other instanceof Stream)) {
+            throw new ArgTypeError("other must be a Stream", this.ge);
+        }
         return this.compare(other) >= 0;
     }
 
@@ -1024,6 +1321,10 @@ export class Stream<T> extends Sequencer<T> {
      * @param key A function to extract the key by which to compare the elements
      *
      * @returns `true` if the elements are sorted, `false` otherwise
+     *
+     * @throws
+     * - {@link ArgTypeError} if `key` is not a function
+     * - {@link ArgCountError} if the number of arguments is greater than 2
      *
      * @group Terminators
      *
@@ -1051,7 +1352,14 @@ export class Stream<T> extends Sequencer<T> {
      * - Mentioned in examples
      *   - {@link Stream.from} - create a Stream from an iterable
      * */
-    public isSorted<U>(this: Stream<T>, reverse = false, key?: Function<T, U>): boolean {
+    public isSorted<U>(this: Stream<T>, reverse = false, key?: Function<T, U>,): boolean {
+        if (arguments.length > 2) {
+            throw new ArgCountError(this.isSorted, arguments.length);
+        }
+        if (arguments.length === 2 && typeof key !== "function") {
+            throw new ArgTypeError("key must be a function", this.isSorted);
+        }
+
         if (key) {
             return this.map(key).isSorted(reverse);
         }
@@ -1086,6 +1394,10 @@ export class Stream<T> extends Sequencer<T> {
      *
      * @returns `true` if the elements are sorted, `false` otherwise
      *
+     * @throws
+     * - {@link ArgTypeError} if `fn` is not a function
+     * - {@link ArgCountError} if the number of arguments is less than 1 or greater than 2
+     *
      * @group Terminators
      *
      * @example Check if a Stream is sorted
@@ -1101,6 +1413,13 @@ export class Stream<T> extends Sequencer<T> {
      *   - {@link Stream.from} - create a Stream from an iterable
      * */
     public isSortedBy(this: Stream<T>, fn: Comparator<T>, reverse: boolean = false): boolean {
+        if (arguments.length < 1 || arguments.length > 2) {
+            throw new ArgCountError(this.isSortedBy, arguments.length);
+        }
+        if (typeof fn !== "function") {
+            throw new ArgTypeError("fn must be a function", this.isSortedBy);
+        }
+
         const iterator = this.sequencer[Symbol.iterator]();
         let {value, done} = iterator.next();
         if (done) return true;
@@ -1135,6 +1454,10 @@ export class Stream<T> extends Sequencer<T> {
      * @returns A new Stream containing all the elements of the original Stream,
      * and the elements of the other iterable
      *
+     * @throws
+     *  - {@link ArgTypeError} if `iterable` is not an iterable
+     *  - {@link ArgCountError} if the number of arguments is not 1
+     *
      * @group Transformers
      *
      * @example Chain a Stream with an array
@@ -1149,11 +1472,21 @@ export class Stream<T> extends Sequencer<T> {
      *
      * */
     public chain<U>(iterable: Iterable<U>) {
+        if (arguments.length !== 1) {
+            throw new ArgCountError(this.chain, arguments.length);
+        }
+        if (!isIterable(iterable)) {
+            throw new ArgTypeError("iterable must be an iterable", this.chain);
+        }
         const {sequencer} = this;
-        return new Stream(new Sequencer((function* chain() {
-            yield* sequencer;
-            yield* iterable;
-        })()));
+        return new Stream(
+            new Sequencer(
+                (function* chain() {
+                    yield* sequencer;
+                    yield* iterable;
+                })(),
+            ),
+        );
     }
 
     /**
@@ -1167,6 +1500,10 @@ export class Stream<T> extends Sequencer<T> {
      * @returns
      * - The result of the reduction, if the Stream is not empty
      * - `undefined` if the Stream is empty
+     *
+     * @throws
+     * - {@link ArgTypeError} if `fn` is not a function
+     * - {@link ArgCountError} if the number of arguments is not 1
      *
      * @group Terminators
      *
@@ -1192,6 +1529,13 @@ export class Stream<T> extends Sequencer<T> {
      *   - {@link Stream.range} - create a Stream of numbers
      * */
     public reduce(fn: BiOperator<T>): T | undefined {
+        if (arguments.length !== 1) {
+            throw new ArgCountError(this.reduce, arguments.length);
+        }
+        if (typeof fn !== "function") {
+            throw new ArgTypeError("fn must be a function", this.reduce);
+        }
+
         const iterator = this.sequencer[Symbol.iterator]();
         const {value, done} = iterator.next();
         if (done) return undefined;
@@ -1208,7 +1552,12 @@ export class Stream<T> extends Sequencer<T> {
     /**
      * Adds the elements of the Stream of numbers.
      *
-     * @returns The sum of the elements in the Stream
+     * @returns
+     * - The sum of the elements in the Stream if the Stream is not empty
+     * - 0 if the Stream is empty
+     *
+     * @throws
+     * - {@link ArgCountError} if the number of arguments is not 0
      *
      * @group Terminators
      *
@@ -1230,17 +1579,21 @@ export class Stream<T> extends Sequencer<T> {
      *
      * */
     public sum(this: Stream<number>) {
-        let acc = 0;
-        for (const x of this.sequencer) {
-            acc += x;
+        if (arguments.length !== 0) {
+            throw new ArgCountError(this.sum, arguments.length);
         }
-        return acc;
+        return this.fold(0, (acc, x) => acc + x);
     }
 
     /**
      * Multiplies the elements of the Stream of numbers.
      *
-     * @returns The product of the elements in the Stream
+     * @returns
+     * - The product of the elements in the Stream if the Stream is not empty
+     * - 1 if the Stream is empty
+     *
+     * @throws
+     * - {@link ArgCountError} if the number of arguments is not 0
      *
      * @group Terminators
      *
@@ -1260,17 +1613,19 @@ export class Stream<T> extends Sequencer<T> {
      *
      * */
     public product(this: Stream<number>) {
-        let acc = 1;
-        for (const x of this.sequencer) {
-            acc *= x;
+        if (arguments.length !== 0) {
+            throw new ArgCountError(this.product, arguments.length);
         }
-        return acc;
+        return this.reduce((acc, x) => acc * x) ?? 1;
     }
 
     /**
      * Finds the maximum element in the Stream.
      *
      * @returns The maximum element in the Stream
+     *
+     * @throws
+     * - {@link ArgCountError} if the number of arguments is not 0
      *
      * @group Terminators
      *
@@ -1290,7 +1645,9 @@ export class Stream<T> extends Sequencer<T> {
      *
      * */
     public max(this: Stream<number>) {
-
+        if (arguments.length !== 0) {
+            throw new ArgCountError(this.max, arguments.length);
+        }
         return this.reduce(Math.max);
     }
 
@@ -1298,6 +1655,9 @@ export class Stream<T> extends Sequencer<T> {
      * Finds the minimum element in the Stream.
      *
      * @returns The minimum element in the Stream
+     *
+     * @throws
+     * - {@link ArgCountError} if the number of arguments is not 0
      *
      * @group Terminators
      *
@@ -1317,6 +1677,9 @@ export class Stream<T> extends Sequencer<T> {
      *
      * */
     public min(this: Stream<number>) {
+        if (arguments.length !== 0) {
+            throw new ArgCountError(this.min, arguments.length);
+        }
         return this.reduce(Math.min);
     }
 
@@ -1324,6 +1687,9 @@ export class Stream<T> extends Sequencer<T> {
      * Counts the elements in the Stream.
      *
      * @returns The number of elements in the Stream
+     *
+     * @throws
+     * - {@link ArgCountError} if the number of arguments is not 0
      *
      * @group Terminators
      *
@@ -1344,6 +1710,9 @@ export class Stream<T> extends Sequencer<T> {
      * - {@link Stream.filter} - filter the elements in a Stream by a predicate
      * */
     public count() {
+        if (arguments.length !== 0) {
+            throw new ArgCountError(this.count, arguments.length);
+        }
         return this.fold(0, (acc, _) => acc + 1);
     }
 
@@ -1354,6 +1723,10 @@ export class Stream<T> extends Sequencer<T> {
      * @param separator The separator to use between the elements
      *
      * @returns A string containing the elements of the Stream
+     *
+     * @throws
+     * - {@link ArgCountError} if the number of arguments is greater than 1
+     * - {@link ArgTypeError} if `separator` is not a string
      *
      * @group Terminators
      *
@@ -1372,11 +1745,19 @@ export class Stream<T> extends Sequencer<T> {
      * @see
      * - {@link Stream.from} - create a Stream from an iterable
      * */
-    public join(this: Stream<string>, separator = "") {
-        if (separator == "") {
-            return this.reduce((acc, x) => acc + x) ?? "";
+    public join(this: Stream<string>, separator: string = "") {
+        if (arguments.length > 1) {
+            throw new ArgCountError(this.join, arguments.length);
         }
-        return this.reduce((acc, x) => acc + separator + x) ?? "";
+        if (typeof (separator as any) !== "string") {
+            throw new ArgTypeError("separator must be a string", this.join);
+        }
+
+        let reducer = separator === ""
+            ? (acc: string, x: string) => acc + x
+            : (acc: string, x: string) => acc + separator + x;
+
+        return this.reduce(reducer) ?? "";
     }
 
     /**
@@ -1385,6 +1766,10 @@ export class Stream<T> extends Sequencer<T> {
      * @param fn The function to call for each element in the Stream
      *
      * @group Terminators
+     *
+     * @throws
+     * - {@link ArgTypeError} if `fn` is not a function
+     * - {@link ArgCountError} if the number of arguments is not 1
      *
      * @example Print the elements in a Stream
      * ```ts
@@ -1402,6 +1787,12 @@ export class Stream<T> extends Sequencer<T> {
      * - {@link Stream.range} - create a Stream of numbers
      * */
     public forEach(fn: Consumer<T>) {
+        if (arguments.length !== 1) {
+            throw new ArgCountError(this.forEach, arguments.length);
+        }
+        if (typeof fn !== "function") {
+            throw new ArgTypeError("fn must be a function", this.forEach);
+        }
         for (const x of this.sequencer) fn(x);
     }
 
@@ -1413,6 +1804,9 @@ export class Stream<T> extends Sequencer<T> {
      * @returns
      * - `true` if the Stream is empty
      * - `true` if all the elements in the Stream are `true`, `false` otherwise
+     *
+     * @throws
+     * - {@link ArgCountError} if the number of arguments is not 0
      *
      * @group Terminators
      *
@@ -1435,6 +1829,9 @@ export class Stream<T> extends Sequencer<T> {
      *   - {@link Stream.map} - transform the elements in a Stream using a function
      * */
     public all(this: Stream<boolean>) {
+        if (arguments.length !== 0) {
+            throw new ArgCountError(this.all, arguments.length);
+        }
         const iterator = this.sequencer[Symbol.iterator]();
         while (true) {
             const {value, done} = iterator.next();
@@ -1457,6 +1854,10 @@ export class Stream<T> extends Sequencer<T> {
      * - `true` if the Stream is empty
      * - `true` if all the elements in the Stream satisfy the predicate, `false` otherwise
      *
+     * @throws
+     * - {@link ArgTypeError} if `fn` is not a function
+     * - {@link ArgCountError} if the number of arguments is not 1
+     *
      * @group Terminators
      *
      * @example Check if all the elements in a Stream are even
@@ -1476,6 +1877,12 @@ export class Stream<T> extends Sequencer<T> {
      *   - {@link Stream.map} - transform the elements in a Stream using a function
      * */
     public allMap(this: Stream<T>, fn: (x: T) => boolean) {
+        if (arguments.length !== 1) {
+            throw new ArgCountError(this.allMap, arguments.length);
+        }
+        if (typeof fn !== "function") {
+            throw new ArgTypeError("fn must be a function", this.allMap);
+        }
         const iterator = this.sequencer[Symbol.iterator]();
         while (true) {
             const {value, done} = iterator.next();
@@ -1492,6 +1899,9 @@ export class Stream<T> extends Sequencer<T> {
      * @returns
      * - `false` if the Stream is empty
      * - true` if any of the elements in the Stream are `true`, `false` otherwise
+     *
+     * @throws
+     * - {@link ArgCountError} if the number of arguments is not 0
      *
      * @group Terminators
      *
@@ -1514,6 +1924,9 @@ export class Stream<T> extends Sequencer<T> {
      *   - {@link Stream.map} - transform the elements in a Stream using a function
      * */
     public any(this: Stream<boolean>) {
+        if (arguments.length !== 0) {
+            throw new ArgCountError(this.any, arguments.length);
+        }
         const iterator = this.sequencer[Symbol.iterator]();
         while (true) {
             const {value, done} = iterator.next();
@@ -1536,6 +1949,10 @@ export class Stream<T> extends Sequencer<T> {
      * - `false` if the Stream is empty
      * - `true` if any of the elements in the Stream satisfy the predicate, `false` otherwise
      *
+     * @throws
+     * - {@link ArgTypeError} if `fn` is not a function
+     * - {@link ArgCountError} if the number of arguments is not 1
+     *
      * @group Terminators
      *
      * @example Check if any of the elements in a Stream are odd
@@ -1554,6 +1971,12 @@ export class Stream<T> extends Sequencer<T> {
      *   - {@link Stream.filter} - filter the elements in a Stream by a predicate
      * */
     public anyMap(this: Stream<T>, fn: (x: T) => boolean) {
+        if (arguments.length !== 1) {
+            throw new ArgCountError(this.anyMap, arguments.length);
+        }
+        if (typeof fn !== "function") {
+            throw new ArgTypeError("fn must be a function", this.anyMap);
+        }
         const iterator = this.sequencer[Symbol.iterator]();
         while (true) {
             const {value, done} = iterator.next();
@@ -1574,6 +1997,10 @@ export class Stream<T> extends Sequencer<T> {
      *
      * @group Terminators
      *
+     * @throws
+     * - {@link ArgTypeError} if `predicate` is not a function
+     * - {@link ArgCountError} if the number of arguments is not 1
+     *
      * @example Find the first prime number larger than 20
      * ```ts
      * const isPrime = require('is-prime-number'); // npm install is-prime-number
@@ -1586,6 +2013,12 @@ export class Stream<T> extends Sequencer<T> {
      * - {@link https://www.npmjs.com/package/is-prime-number | `is-prime-number`} - prime number checker library
      * */
     public findFirst(predicate: (x: T) => boolean): T | undefined {
+        if (arguments.length !== 1) {
+            throw new ArgCountError(this.findFirst, arguments.length);
+        }
+        if (typeof predicate !== "function") {
+            throw new ArgTypeError("predicate must be a function", this.findFirst);
+        }
         for (const x of this.sequencer) {
             if (predicate(x)) return x;
         }
@@ -1602,6 +2035,10 @@ export class Stream<T> extends Sequencer<T> {
      * The last element in the Stream that satisfies the predicate,
      * or `undefined` if no element satisfies the predicate
      *
+     * @throws
+     * - {@link ArgTypeError} if `predicate` is not a function
+     * - {@link ArgCountError} if the number of arguments is not 1
+     *
      * @group Terminators
      *
      * @example Find the last prime number smaller than 20
@@ -1615,6 +2052,12 @@ export class Stream<T> extends Sequencer<T> {
      * - {@link Stream.range} - create a Stream of numbers
      * */
     public findLast(predicate: (x: T) => boolean): T | undefined {
+        if (arguments.length !== 1) {
+            throw new ArgCountError(this.findLast, arguments.length);
+        }
+        if (typeof predicate !== "function") {
+            throw new ArgTypeError("predicate must be a function", this.findLast);
+        }
         let result: T | undefined = undefined;
         for (const x of this.sequencer) {
             if (predicate(x)) result = x;

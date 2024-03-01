@@ -1,7 +1,30 @@
-import {ValueError} from "~/errors";
+import {ArgCountError, ArgTypeError, ArgValueError} from "~/errors";
 import {Stream} from "~/index"
 
 describe("Stream.map()", () => {
+
+    it("should throw with invalid number of arguments", () => {
+        expect(() => {
+            Stream.range(10)
+                // @ts-expect-error
+                .map()
+        }).toThrow(ArgCountError);
+
+        expect(() => {
+            Stream.range(10)
+                // @ts-expect-error
+                .map((x) => -x, 5)
+        }).toThrow(ArgCountError);
+    })
+
+    it("should throw with invalid argument", () => {
+        expect(() => {
+            Stream.range(10)
+                // @ts-expect-error
+                .map(5)
+        }).toThrow(ArgTypeError);
+    })
+
     let numbers = [1, 2, 3];
 
     it("should map values", () => {
@@ -31,8 +54,29 @@ describe("Stream.map()", () => {
 });
 
 describe("Stream.filter()", () => {
-    let numbers = [1, 2, 3, 4, 5, 6];
+    it("should throw with invalid number of arguments", () => {
+        expect(() => {
+            Stream.range(10)
+                // @ts-expect-error
+                .filter()
+        }).toThrow(ArgCountError);
 
+        expect(() => {
+            Stream.range(10)
+                // @ts-expect-error
+                .filter((x) => x > 5, 5)
+        }).toThrow(ArgCountError);
+    })
+
+    it("should throw with invalid argument", () => {
+        expect(() => {
+            Stream.range(10)
+                // @ts-expect-error
+                .filter(5)
+        }).toThrow(ArgTypeError);
+    })
+
+    let numbers = [1, 2, 3, 4, 5, 6];
     it("should filter odd numbers", () => {
         let s = Stream.from(numbers)
             .filter(x => x % 2 === 0);
@@ -61,6 +105,33 @@ describe("Stream.filter()", () => {
 });
 
 describe("Stream.skip()", () => {
+    it("should throw with invalid number of arguments", () => {
+        expect(() => {
+            Stream.range(10)
+                // @ts-expect-error
+                .skip()
+        }).toThrow(ArgCountError);
+
+        expect(() => {
+            Stream.range(10)
+                // @ts-expect-error
+                .skip(1, 2)
+        }).toThrow(ArgCountError);
+    })
+
+    it("should throw with invalid argument", () => {
+        expect(() => {
+            Stream.range(10)
+                // @ts-expect-error
+                .skip("1")
+        }).toThrow(ArgTypeError);
+
+        expect(() => {
+            Stream.range(10)
+                .skip(-1)
+        }).toThrow(ArgValueError);
+    })
+
     let numbers = [1, 2, 3, 4, 5, 6];
 
     it("should skip the first 3 numbers", () => {
@@ -89,7 +160,82 @@ describe("Stream.skip()", () => {
     })
 })
 
+describe("Stream.take()", () => {
+    let small_arr = [1, 2, 3];
+
+    it("should throw with invalid number of arguments", () => {
+        expect(() => {
+            Stream.range(10)
+                // @ts-expect-error
+                .take()
+        }).toThrow(ArgCountError);
+        expect(() => {
+            Stream.range(10)
+                // @ts-expect-error
+                .take(1, 2)
+        }).toThrow(ArgCountError);
+    })
+
+    it("should throw if argument is not a number", () => {
+        expect(() => {
+            Stream.range(10)
+                // @ts-expect-error
+                .take("1")
+        }).toThrow(ArgTypeError);
+        expect(() => {
+            Stream.range(10)
+                .take(NaN)
+        })
+    })
+
+    it("should throw if number is negative", () => {
+        expect(() => {
+            Stream.range(10)
+                .take(-1)
+        }).toThrow(ArgValueError);
+    })
+
+    it("should take the first 3 numbers", () => {
+        let s = Stream.from(small_arr)
+            .take(3);
+        expect([...s]).toEqual(small_arr);
+    })
+
+    it("should take the first 0 numbers", () => {
+        let s = Stream.from(small_arr)
+            .take(0);
+        expect([...s]).toEqual([]);
+    })
+
+    it("should take all the numbers", () => {
+        let s = Stream.from(small_arr)
+            .take(small_arr.length);
+        expect([...s]).toEqual(small_arr);
+    })
+
+    it("should be chainable", () => {
+        let s = Stream.from(small_arr)
+            .take(2)
+            .take(2);
+        expect([...s]).toEqual([1, 2]);
+    })
+
+    it("should exit if the stream is exhausted", () => {
+        let s = Stream.from(small_arr)
+            .take(100);
+        expect([...s]).toEqual(small_arr);
+    })
+})
+
 describe("Stream.enumerate()", () => {
+    it("should throw with invalid number of arguments", () => {
+        expect(() => {
+            Stream.range(10)
+                // @ts-expect-error
+                .enumerate(1)
+        }).toThrow(ArgCountError);
+    })
+
     let numbers = [1, 2, 3, 4, 5, 6];
 
     it("should enumerate the numbers", () => {
@@ -108,6 +254,14 @@ describe("Stream.enumerate()", () => {
 })
 
 describe("Stream.flatten()", () => {
+    it("should throw with invalid number of arguments", () => {
+        expect(() => {
+            Stream.range(10)
+                // @ts-expect-error
+                .flatten(1)
+        }).toThrow(ArgCountError);
+    })
+
     let numbers = [[1, 2], [3, 4], [5, 6]];
 
     it("should flatten the numbers", () => {
@@ -132,6 +286,22 @@ describe("Stream.flatten()", () => {
 })
 
 describe("Stream.chain()", () => {
+    it("should throw with invalid number of arguments", () => {
+        expect(() => {
+            Stream.range(10)
+                // @ts-expect-error
+                .chain()
+        }).toThrow(ArgCountError);
+    })
+
+    it("should throw with invalid argument", () => {
+        expect(() => {
+            Stream.range(10)
+                // @ts-expect-error
+                .chain(5)
+        }).toThrow(ArgTypeError);
+    })
+
     let numbers = [1, 2, 3];
     let letters = ["a", "b", "c"];
 
@@ -150,11 +320,32 @@ describe("Stream.chain()", () => {
 })
 
 describe("Stream.chunk()", () => {
+    it("should throw with invalid number of arguments", () => {
+        expect(() => {
+            Stream.range(10)
+                // @ts-expect-error
+                .chunk()
+        }).toThrow(ArgCountError);
+        expect(() => {
+            Stream.range(10)
+                // @ts-expect-error
+                .chunk(1, 2)
+        })
+    })
+
+    it("should throw with invalid argument", () => {
+        expect(() => {
+            Stream.range(10)
+                // @ts-expect-error
+                .chunk("1")
+        }).toThrow(ArgTypeError);
+    })
+
     let numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 
     it("should throw when n <= 0", () => {
-        expect(() => Stream.from(numbers).chunk(0)).toThrow(ValueError);
-        expect(() => Stream.from(numbers).chunk(-1)).toThrow(ValueError);
+        expect(() => Stream.from(numbers).chunk(0)).toThrow(ArgValueError);
+        expect(() => Stream.from(numbers).chunk(-1)).toThrow(ArgValueError);
     })
 
     it("should chunk the numbers (n=1)", () => {
@@ -179,11 +370,36 @@ describe("Stream.chunk()", () => {
 })
 
 describe("Stream.slide()", () => {
+    it("should throw with invalid number of arguments", () => {
+        expect(() => {
+            Stream.range(10)
+                // @ts-expect-error
+                .slide()
+        }).toThrow(ArgCountError);
+        expect(() => {
+            Stream.range(10)
+                // @ts-expect-error
+                .slide(1, 2)
+        })
+    })
+
+    it("should throw with invalid argument", () => {
+        expect(() => {
+            Stream.range(10)
+                // @ts-expect-error
+                .slide("1")
+        }).toThrow(ArgTypeError);
+        expect(() => {
+            Stream.range(10)
+                .slide(-1)
+        }).toThrow(ArgValueError);
+    })
+
     let numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 
     it("should throw when n <= 0", () => {
-        expect(() => Stream.from(numbers).slide(0)).toThrow(ValueError);
-        expect(() => Stream.from(numbers).slide(-1)).toThrow(ValueError);
+        expect(() => Stream.from(numbers).slide(0)).toThrow(ArgValueError);
+        expect(() => Stream.from(numbers).slide(-1)).toThrow(ArgValueError);
     })
 
     it("should slide the numbers (n=1)", () => {

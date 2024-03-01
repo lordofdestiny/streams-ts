@@ -1,4 +1,4 @@
-import {type Predicate, type Function, UnaryOperator} from './types';
+import {type Function, type Predicate, RestArguments, UnaryOperator} from './types';
 
 /**
  * @internal
@@ -40,7 +40,7 @@ export function rangeStartStopStep(start: number, stop: number, step: number): G
  * @param stop - The upper bound of the range
  * @param step - The step size, should be positive, otherwise the generator will not yield any values
  *
- * @returns A new generator that yields numbers in the range [`start`, `stop`)
+ * @returns A new generator that yields numbers in the range [`start`, `stop`)c
  * */
 function* rangeIncreasing(start: number, stop: number, step: number): Generator<number> {
     if (step <= 0) return;
@@ -264,7 +264,7 @@ export function* flatten<T>(iterable: Iterable<Iterable<T>>): Generator<T, void,
  * @returns A new generator
  *
  * */
-export function* zip<T extends any[]>(iterables: { [I in keyof T]: Iterable<T[I]> }): Generator<T, void, undefined> {
+export function* zip<T extends any[]>(iterables: RestArguments<T>): Generator<T, void, undefined> {
     const iterators = iterables.map((iterable) => iterable[Symbol.iterator]());
     while (true) {
         const values = iterators.map((iterator) => iterator.next());

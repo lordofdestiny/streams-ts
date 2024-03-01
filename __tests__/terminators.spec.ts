@@ -1,6 +1,39 @@
+import {ArgCountError, ArgTypeError} from "~/errors";
 import {Stream} from "~/index";
 
 describe("Stream.fold()", () => {
+    it("should throw with invalid number of arguments", () => {
+        expect(() => {
+            Stream.range(10)
+                // @ts-expect-error
+                .fold()
+        }).toThrow(ArgCountError);
+        expect(() => {
+            Stream.range(10)
+                // @ts-expect-error
+                .fold(0)
+        }).toThrow(ArgCountError);
+        expect(() => {
+            Stream.range(10)
+                // @ts-expect-error
+                .fold(0, (acc, x) => acc + x, 0)
+        }).toThrow(ArgCountError);
+    })
+
+    it("should throw if second argument is not a function", () => {
+        expect(() => {
+            Stream.range(10)
+                // @ts-expect-error
+                .fold(0, 0)
+        }).toThrow(ArgTypeError);
+    })
+
+    it("should return initial value for empty stream", () => {
+        let s = Stream.from([]);
+        let result = s.fold(0, (acc, x) => acc + x);
+        expect(result).toEqual(0);
+    })
+
     it("should sum first 10 numbers", () => {
         let numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
         let s = Stream.from([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
@@ -20,6 +53,32 @@ describe("Stream.fold()", () => {
 })
 
 describe("Stream.reduce()", () => {
+    it("should throw with invalid number of arguments", () => {
+        expect(() => {
+            Stream.range(10)
+                // @ts-expect-error
+                .reduce()
+        }).toThrow(ArgCountError);
+        expect(() => {
+            Stream.range(10)
+                // @ts-expect-error
+                .reduce((acc, x) => acc + x, 0, 0)
+        }).toThrow(ArgCountError);
+    })
+
+    it("should throw if second argument is not a function", () => {
+        expect(() => {
+            Stream.range(10)
+                // @ts-expect-error
+                .reduce(0)
+        }).toThrow(ArgTypeError);
+    })
+
+    it("should return undefined for empty stream", () => {
+        let s = Stream.from<number>([]);
+        expect(s.reduce((acc, x) => acc + x)).toBeUndefined();
+    })
+
     it("should return undefined for empty stream", () => {
         let s = Stream.from<number>([]);
         expect(s.reduce((acc, x) => acc + x)).toEqual(undefined);
@@ -44,9 +103,35 @@ describe("Stream.reduce()", () => {
 })
 
 describe("Stream.forEach()", () => {
-    const mockFn = jest.fn(
-        (x) => void x
-    );
+    it("should throw with invalid number of arguments", () => {
+        expect(() => {
+            Stream.range(10)
+                // @ts-expect-error
+                .forEach()
+        }).toThrow(ArgCountError);
+        expect(() => {
+            Stream.range(10)
+                // @ts-expect-error
+                .forEach((x) => void x, 2)
+        }).toThrow(ArgCountError);
+    })
+
+    it("should throw if argument is not a function", () => {
+        expect(() => {
+            Stream.range(10)
+                // @ts-expect-error
+                .forEach(0)
+        }).toThrow(ArgTypeError);
+    })
+
+    const mockFn = jest.fn((x) => void x);
+
+    it("should call the function 0 times", () => {
+        let s = Stream.from([]);
+        const mockFn = jest.fn();
+        s.forEach(mockFn);
+        expect(mockFn.mock.calls.length).toBe(0);
+    })
 
     test("should call mockFn 10 times", () => {
         let s = Stream.from([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
@@ -62,8 +147,32 @@ describe("Stream.forEach()", () => {
     })
 })
 
-
 describe("Stream.compare()", () => {
+    it("should throw with invalid number of arguments", () => {
+        expect(() => {
+            Stream.range(10)
+                // @ts-expect-error
+                .compare()
+        }).toThrow(ArgCountError);
+        expect(() => {
+            Stream.range(10)
+                // @ts-expect-error
+                .compare(Stream.range(10), (a, b) => a - b)
+        }).toThrow(ArgCountError);
+        expect(() => {
+            Stream.range(10)
+                .compare(Stream.range(10))
+        }).not.toThrow(ArgCountError);
+    })
+
+    it("should throw if second argument is not a Stream", () => {
+        expect(() => {
+            Stream.range(10)
+                // @ts-expect-error
+                .compare(0)
+        }).toThrow(ArgTypeError);
+    })
+
     it("should compare empty streams", () => {
         let s1 = Stream.from([]);
         const s2 = Stream.from([]);
@@ -109,6 +218,39 @@ describe("Stream.compare()", () => {
 })
 
 describe("Stream.compareBy()", () => {
+    it("should throw with invalid number of arguments", () => {
+        expect(() => {
+            Stream.range(10)
+                // @ts-expect-error
+                .compareBy()
+        }).toThrow(ArgCountError);
+        expect(() => {
+            Stream.range(10)
+                // @ts-expect-error
+                .compareBy(Stream.range(10))
+        }).toThrow(ArgCountError);
+        expect(() => {
+            Stream.range(10)
+                .compareBy(Stream.range(10), (a: number) => -a)
+        }).not.toThrow(ArgCountError);
+    })
+
+    it("should throw if first argument is not a Stream", () => {
+        expect(() => {
+            Stream.range(10)
+                // @ts-expect-error
+                .compareBy(0, 0)
+        }).toThrow(ArgTypeError);
+    })
+
+    it("should throw if second argument is not a function", () => {
+        expect(() => {
+            Stream.range(10)
+                // @ts-expect-error
+                .compareBy(Stream.range(10), 0)
+        }).toThrow(ArgTypeError);
+    })
+
     it("should compare objects by key", () => {
         let s1 = Stream.from([{x: 1}, {x: 2}, {x: 3}]);
         const s2 = Stream.from([{x: 3}, {x: 2}, {x: 1}]);
@@ -129,6 +271,39 @@ describe("Stream.compareBy()", () => {
 });
 
 describe('Stream.{eq, ne, lt, le, gt, ge}()', () => {
+    it.each(
+        [
+            ["eq", [[], [1, 2]]],
+            ["ne", [[], [1, 2]]],
+            ["lt", [[], [1, 2]]],
+            ["le", [[], [1, 2]]],
+            ["gt", [[], [1, 2]]],
+            ["ge", [[], [1, 2]]],
+        ])(
+        "whether functions throw with invalid number of arguments",
+        (fnName: string, argsPack) => {
+            for (const args of argsPack) {
+                expect(() => {
+                    // @ts-expect-error
+                    Stream.range(10)[fnName](...args)
+                }).toThrow(ArgCountError);
+            }
+        })
+
+    test.each(
+        [
+            "eq", "ne", "lt", "le", "gt", "ge"
+        ]
+    )(
+        "whether functions throw if the argument is not a Stream",
+        (fnName: string) => {
+            expect(() => {
+                // @ts-expect-error
+                Stream.range(10)[fnName](0)
+            }).toThrow(ArgTypeError);
+        }
+    )
+
     it('should compare streams', () => {
         let s1 = Stream.from([1, 2, 3]);
         let s2 = Stream.from([1, 2, 3]);
@@ -159,6 +334,39 @@ describe('Stream.{eq, ne, lt, le, gt, ge}()', () => {
 });
 
 describe("Stream.eqBy()", () => {
+    it("should throw with invalid number of arguments", () => {
+        expect(() => {
+            Stream.range(10)
+                // @ts-expect-error
+                .eqBy()
+        }).toThrow(ArgCountError);
+        expect(() => {
+            Stream.range(10)
+                // @ts-expect-error
+                .eqBy(Stream.range(10), (a) => -a, 5)
+        }).toThrow(ArgCountError);
+        expect(() => {
+            Stream.range(10)
+                .eqBy(Stream.range(10), (a: number) => -a)
+        }).not.toThrow(ArgCountError);
+    })
+
+    it("should throw if first argument is not a Stream", () => {
+        expect(() => {
+            Stream.range(10)
+                // @ts-expect-error
+                .eqBy(0, 0)
+        }).toThrow(ArgTypeError);
+    })
+
+    it("should throw if second argument is not a function", () => {
+        expect(() => {
+            Stream.range(10)
+                // @ts-expect-error
+                .eqBy(Stream.range(10), 0)
+        }).toThrow(ArgTypeError);
+    })
+
     it("should compare streams by key", () => {
         const arr1 = [{x: 1}, {x: 2}, {x: 3}];
         const arr2 = [{x: 1}, {x: 2}, {x: 4}];
@@ -170,9 +378,32 @@ describe("Stream.eqBy()", () => {
     })
 })
 
-
 describe("Stream.isSorted()", () => {
-    test("if empty stream is sorted", () => {
+    it("should throw with invalid number of arguments", () => {
+        expect(() => {
+            Stream.range(10)
+                .isSorted()
+        }).not.toThrow(ArgCountError);
+        expect(() => {
+            Stream.range(10)
+                .isSorted(true)
+        }).not.toThrow(ArgCountError);
+        expect(() => {
+            Stream.range(10)
+                // @ts-expect-error
+                .isSorted(true, (a, b) => a - b, 0)
+        }).toThrow(ArgCountError);
+    })
+
+    it("should throw if second argument is not a function", () => {
+        expect(() => {
+            Stream.range(10)
+                // @ts-expect-error
+                .isSorted(0, 0)
+        }).toThrow(ArgTypeError);
+    })
+
+    it("should should return true for empty stream", () => {
         expect(Stream.of().isSorted()).toEqual(true);
     })
 
@@ -206,6 +437,35 @@ describe("Stream.isSorted()", () => {
 })
 
 describe("Stream.isSortedBy()", () => {
+    it("should throw with invalid number of arguments", () => {
+        expect(() => {
+            Stream.range(10)
+                // @ts-expect-error
+                .isSortedBy()
+        }).toThrow(ArgCountError);
+        expect(() => {
+            Stream.range(10)
+                .isSortedBy((a, b) => a - b)
+        }).not.toThrow(ArgCountError);
+        expect(() => {
+            Stream.range(10)
+                .isSortedBy((a, b) => a - b, true)
+        }).not.toThrow(ArgCountError);
+        expect(() => {
+            Stream.range(10)
+                // @ts-expect-error
+                .isSortedBy((a, b) => a - b, true, 0)
+        }).toThrow(ArgCountError);
+    })
+
+    it("should throw if first argument is not a function", () => {
+        expect(() => {
+            Stream.range(10)
+                // @ts-expect-error
+                .isSortedBy(0)
+        }).toThrow(ArgTypeError);
+    })
+
     test("if empty stream is sorted", () => {
         expect(Stream.of<number>().isSortedBy((a, b) => a - b)).toEqual(true);
     })
@@ -237,12 +497,33 @@ describe("Stream.isSortedBy()", () => {
 })
 
 describe('Stream.{sum, product, min, max}()', () => {
+    it.each([
+        ["sum"],
+        ["product"],
+        ["min"],
+        ["max"],
+    ])("should throw with invalid number of arguments",
+        (fnName: string) => {
+            expect(() => {
+                // @ts-expect-error
+                Stream.range(10)[fnName](0)
+            }).toThrow(ArgCountError);
+        })
+
+    it("should return 0 for empty stream", () => {
+        expect(Stream.of<number>().sum()).toEqual(0);
+    })
+
     it('should sum the numbers', () => {
         let s = Stream.range(1, 6);
         expect(s.sum()).toEqual(15);
     })
 
-    it('should sum the numbers', () => {
+    it('should return 1 for empty stream', () => {
+        expect(Stream.of<number>().product()).toEqual(1);
+    });
+
+    it('should multiply the numbers', () => {
         const fact = (n: number) => Stream.range(n, 0, -1).product();
         expect(fact(5)).toEqual(120);
     })
@@ -259,6 +540,13 @@ describe('Stream.{sum, product, min, max}()', () => {
 });
 
 describe('Stream.count()', () => {
+    it("should throw with invalid number of arguments", () => {
+        expect(() => {
+            // @ts-expect-error
+            Stream.range(10).count(0)
+        }).toThrow(ArgCountError);
+    })
+
     it("should return 0 for empty stream", () => {
         expect(Stream.of().count()).toEqual(0);
     })
@@ -282,15 +570,57 @@ describe('Stream.count()', () => {
 
 describe("Stream.{all, any, allMap, anyMap}()", () => {
     test("that Stream.all() works as expected", () => {
+        expect(() => {
+            // @ts-expect-error
+            Stream.of<boolean>().all(1)
+        }).toThrow(ArgCountError);
         expect(Stream.of(true, true, true).all()).toEqual(true);
         expect(Stream.of(true, false, true).all()).toEqual(false);
         expect(Stream.of(false, false, false).all()).toEqual(false);
     })
 
     test("that Stream.any() works as expected", () => {
+        expect(() => {
+            // @ts-expect-error
+            Stream.of<boolean>().any(1)
+        }).toThrow(ArgCountError);
         expect(Stream.of(true, true, true).any()).toEqual(true);
         expect(Stream.of(true, false, true).any()).toEqual(true);
         expect(Stream.of(false, false, false).any()).toEqual(false);
+    })
+
+    it("should throw with invalid number of arguments", () => {
+        expect(() => {
+            Stream.range(10)
+                // @ts-expect-error
+                .allMap()
+        }).toThrow(ArgCountError);
+        expect(() => {
+            Stream.range(10)
+                // @ts-expect-error
+                .allMap(1, 2)
+        })
+        expect(() => {
+            Stream.range(10)
+                // @ts-expect-error
+                .anyMap()
+        }).toThrow(ArgCountError);
+        expect(() => {
+            Stream.range(10)
+                // @ts-expect-error
+                .anyMap(1, 2)
+        })
+    })
+
+    it("should throw if first argument is not a function", () => {
+        expect(() => {
+            // @ts-expect-error
+            Stream.range(10).allMap(0)
+        }).toThrow(ArgTypeError);
+        expect(() => {
+            // @ts-expect-error
+            Stream.range(10).anyMap(0)
+        }).toThrow(ArgTypeError);
     })
 
     it("should check if all elements are even", () => {
@@ -320,6 +650,27 @@ describe("Stream.{all, any, allMap, anyMap}()", () => {
 })
 
 describe("Stream.findFirst()", () => {
+    it("should throw with invalid number of arguments", () => {
+        expect(() => {
+            Stream.range(10)
+                // @ts-expect-error
+                .findFirst()
+        }).toThrow(ArgCountError);
+        expect(() => {
+            Stream.range(10)
+                // @ts-expect-error
+                .findFirst(1, 2)
+        }).toThrow(ArgCountError);
+    })
+
+    it("should throw if argument is not a function", () => {
+        expect(() => {
+            Stream.range(10)
+                // @ts-expect-error
+                .findFirst(0)
+        }).toThrow(ArgTypeError);
+    })
+
     it("should find the first even number greater than 3", () => {
         let s = Stream.range(1, 6)
             .findFirst(x => x % 2 === 0 && x > 3);
@@ -334,6 +685,27 @@ describe("Stream.findFirst()", () => {
 })
 
 describe("Stream.findLast()", () => {
+    it("should throw with invalid number of arguments", () => {
+        expect(() => {
+            Stream.range(10)
+                // @ts-expect-error
+                .findLast()
+        }).toThrow(ArgCountError);
+        expect(() => {
+            Stream.range(10)
+                // @ts-expect-error
+                .findLast(1, 2)
+        }).toThrow(ArgCountError);
+    })
+
+    it("should throw if argument is not a function", () => {
+        expect(() => {
+            Stream.range(10)
+                // @ts-expect-error
+                .findLast(0)
+        }).toThrow(ArgTypeError);
+    })
+
     it("should find the last even number greater than 3", () => {
         let s = Stream.range(1, 10)
             .findLast(x => x % 2 === 0 && x > 3);
@@ -348,6 +720,27 @@ describe("Stream.findLast()", () => {
 })
 
 describe('Stream.takeWhile()', () => {
+    it("should throw with invalid number of arguments", () => {
+        expect(() => {
+            Stream.range(10)
+                // @ts-expect-error
+                .takeWhile()
+        }).toThrow(ArgCountError);
+        expect(() => {
+            Stream.range(10)
+                // @ts-expect-error
+                .takeWhile(1, 2)
+        }).toThrow(ArgCountError);
+    })
+
+    it("should throw if argument is not a function", () => {
+        expect(() => {
+            Stream.range(10)
+                // @ts-expect-error
+                .takeWhile(0)
+        }).toThrow(ArgTypeError);
+    })
+
     it("should return an empty stream", () => {
         let s = Stream.range(1, 6)
             .takeWhile(x => x > 6);

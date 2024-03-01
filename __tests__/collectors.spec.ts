@@ -1,6 +1,14 @@
 import {Stream} from "~/index"
+import {ArgCountError, ArgTypeError} from "~/errors";
 
 describe("Stream.toArray()", () => {
+    it("should throw with invalid number of arguments", () => {
+        expect(() => {
+            // @ts-expect-error
+            Stream.from([]).toArray(5);
+        }).toThrow(ArgCountError);
+    })
+
     let small_arr = [1, 2, 3];
 
     it("should return an array", () => {
@@ -18,8 +26,14 @@ describe("Stream.toArray()", () => {
 
 });
 
-
 describe("Stream.toMap()", () => {
+    it("should throw with invalid number of arguments", () => {
+        expect(() => {
+            // @ts-expect-error
+            Stream.from([]).toMap(5);
+        }).toThrow(ArgCountError);
+    })
+
     let arr: Array<[number, string]> = [[1, "one"], [2, "two"], [3, "three"]];
 
     it("should work with empty streams", () => {
@@ -47,7 +61,7 @@ describe("Stream.toMap()", () => {
         expect(() => {
             // @ts-expect-error
             Stream.from([1, 2, 3]).toMap();
-        }).toThrow(TypeError);
+        }).toThrow(ArgTypeError);
     })
 
     it("should be constructable from a complex stream", () => {
@@ -58,12 +72,19 @@ describe("Stream.toMap()", () => {
             .filter(([_, v]) => v % 2 == 0)
             .map(([k, v]): [string, number] => [k, 2 * v])
             .toMap()
-        expect( result).toEqual(new Map([["two", 4]]));
+        expect(result).toEqual(new Map([["two", 4]]));
     })
 });
 
 describe("Stream.toSet()", () => {
     let arr = [1, 2, 3, 1, 2, 3];
+
+    it("should throw with invalid number of arguments", () => {
+        expect(() => {
+            // @ts-expect-error
+            Stream.from([]).toSet(5);
+        }).toThrow(ArgCountError);
+    })
 
     it("should work with empty streams", () => {
         let s = Stream.from([])
@@ -86,6 +107,26 @@ describe("Stream.toSet()", () => {
 });
 
 describe("Stream.join()", () => {
+    it("should throw with invalid number of arguments", () => {
+        expect(() => {
+            // @ts-expect-error
+            Stream.from([]).join(2, 4);
+        }).toThrow(ArgCountError);
+    })
+
+    it("should throw with invalid type of arguments", () => {
+        expect(() => {
+            // @ts-expect-error
+            Stream.from([]).join(2);
+        }).toThrow(ArgTypeError);
+    })
+
+    it("should return an empty string for an empty stream", () => {
+        let s = Stream.from([]);
+        expect(s.join()).toEqual("");
+        expect(s.join(", ")).toEqual("");
+    })
+
     it("should join the elements", () => {
         let s = Stream.from(["a", "b", "c"]);
         expect(s.join()).toEqual("abc");

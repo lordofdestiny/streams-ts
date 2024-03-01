@@ -20,3 +20,7 @@ export function* zip_equal(...iterables: Iterable<any>[]) {
         yield results.map(r => r.value);
     }
 }
+
+export function isIterable(obj: any) {
+    return !!obj?.[Symbol.iterator] && typeof obj[Symbol.iterator] === "function";
+}
