@@ -3,7 +3,6 @@ name: Publish to GitHub Package Registry
 on:
   release:
     types: [ created ]
-  workflow_dispatch:
 
 permissions:
   packages: read
@@ -33,7 +32,8 @@ jobs:
           node-version: 20
           registry-url: https://registry.npmjs.org/
       - run: npm ci
-      - run: npm publish --access public
+      - name: Publish to NPM
+        run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{secrets.NPM_SECRET}}
 
@@ -52,8 +52,10 @@ jobs:
           registry-url: https://npm.pkg.github.com/
           scope: "@lordofdestiny"
       - run: npm ci
-      - run: echo registry=https://npm.pkg.github.com/lordofdestiny >> .npmrc
-      - run: npm publish
+      - name: Set up .npmrc file
+        run: echo registry=https://npm.pkg.github.com/lordofdestiny >> .npmrc
+      - name: Publish to GitHub Package Registry
+        run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
 
