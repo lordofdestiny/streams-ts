@@ -407,7 +407,11 @@ export class Stream<T> extends Sequencer<T> {
      *
      * @example Convert a Stream of key-value pairs to a Map
      * ```ts
-     * const s = Stream.from([["a", 1], ["b", 2], ["c", 3]]);
+     * const s = Stream.from([
+     *     ["a", 1],
+     *     ["b", 2],
+     *     ["c", 3],
+     * ] as [string, number][]);
      * console.log(s.toMap()); // Map(3) { 'a' => 1, 'b' => 2, 'c' => 3 }
      * ```
      * */
@@ -559,7 +563,7 @@ export class Stream<T> extends Sequencer<T> {
      *
      * @example Take the elements of a Stream while they are less than 3
      * ```ts
-     * const s = Stream.range(5).(x => x < 3);
+     * const s = Stream.range(5).takeWhile(x => x < 3);
      * console.log(s.toArray()); // [0, 1, 2]
      * ```
      *
@@ -774,7 +778,7 @@ export class Stream<T> extends Sequencer<T> {
      *
      * @example Flatten a Stream of Streams
      * ```ts
-     * const s = Stream.range(3).map(x => Stream.range(x));
+     * const s = Stream.range(1, 4).map((x) => Stream.range(x));
      * console.log(s.flatten().toArray()); // [0, 0, 1, 0, 1, 2]
      * ```
      *
@@ -1337,7 +1341,7 @@ export class Stream<T> extends Sequencer<T> {
      * @example Check if a Stream of strings is sorted by length
      * ```ts
      * const s = Stream.from(["a", "aa", "aaa"]);
-     * console.log(s.isSortedBy(false, s=> s.length)); // true
+     * console.log(s.isSorted(false, s=> s.length)); // true
      * ```
      *
      * @example Check if a Stream is sorted in descending order
@@ -1403,7 +1407,7 @@ export class Stream<T> extends Sequencer<T> {
      * @example Check if a Stream is sorted
      * ```ts
      * const s = Stream.from(["a", "aa", "aaa"]);
-     * console.log(s.isSortedBy(s=> s.length)); // true
+     * console.log(s.isSortedBy((s1, s2) => s1.length - s2.length)); // true
      * ```
      *
      * @see
