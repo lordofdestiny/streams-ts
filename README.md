@@ -42,7 +42,7 @@ console.log(result); // [4, 8, 12, 16, 20]
 const result2 = Stream.from(arr)
     .filter(x => x % 2 === 0)
     .map(x => x * 2)
-    .reduce((acc, x) => acc + x, 0);
+    .reduce((acc, x) => acc + x);
 
 console.log(result2); // 60
 
@@ -53,9 +53,11 @@ const result3 = Stream.from(arr)
 
 console.log(result3); // 4
 
-const result4 = Stream.from(arr)
-    .chunk(2)
-    .toMap()
+/* We need to make an explicit cast because
+   TypeScript can't infer the type of the chunked stream
+ */
+const stream4 = Stream.from(arr).chunk(2) as Stream<[number, number]>;
+const result4 = stream4.toMap();
 
 console.log(result4); // Map { 1 => 2, 3 => 4, 5 => 6, 7 => 8, 9 => 10 }
 ```
