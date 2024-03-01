@@ -7,7 +7,6 @@
   "license": "MIT",
   "description": "Streams library for TS",
   "scripts": {
-    "preinstall": "node scripts/preinstall.js",
     "prepublish": "npm run build",
     "build": "tsc --build tsconfig.build.json && tsc-alias",
     "build:watch": "concurrently --kill-others \"tsc --build tsconfig.build.json --watch\" \"tsc-alias -w\"",
