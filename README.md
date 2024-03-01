@@ -20,7 +20,7 @@ but there are still some missing methods and some methods, like `cycle` and `rev
 Library is written in TypeScript and compiled to ES6. You can use it in both Node.js and the browser,
 with both TypeScript and JavaScript.
 
-All methods are lazy and return a new Stream object. Even so, 
+All methods are lazy and return a new Stream object. Even so,
 focus of the library was more on the API design and less on performance.
 
 Library is heavily tested with Jest.
@@ -28,7 +28,7 @@ Library is heavily tested with Jest.
 ## Examples
 
 ```typescript
-import {Stream} from 'streams-ts';
+import {Stream} from '@lordofdestiny/streams-ts';
 
 const arr = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
@@ -60,16 +60,14 @@ const result4 = Stream.from(arr)
 console.log(result4); // Map { 1 => 2, 3 => 4, 5 => 6, 7 => 8, 9 => 10 }
 ```
 
+For more examples, check the tests or the documentation.
+
 ## Installation
 
-To install the library, you can use npm: 
+This library is hosted on NPM as well as GitHub Packages.
 
-```npm i lordofdestiny/streams-ts```
-
-Note that currently there only exists a GitHub Package,
-so to install it, you will have to authenticate with your GitHub token.
-
-For mor examples, check the tests or the documentation.
+You can install it with:
+```npm i @lordofdestiny/streams-ts```
 
 ## Building
 
