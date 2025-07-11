@@ -8,6 +8,7 @@ permissions:
 
 jobs:
   build-and-test:
+    environment: pr-sanity
     name: Run Jest Unit Tests
     runs-on: ubuntu-latest
     steps:
