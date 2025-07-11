@@ -1,4 +1,4 @@
-name: Generate Docs for GitHub Pages
+name: PR Sanity
 
 on:
   pull_request:
@@ -13,8 +13,8 @@ on:
 # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
   contents: read
-  id-token: write
 
 jobs:
   build-and-test:
+    name: Build and Test
     uses: ./.github/workflows/build-and-test.yml
