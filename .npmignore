@@ -1,6 +1,6 @@
 .idea/
 scripts/
-__tests__/
+test/
 coverage/
 docs/
 .github/
