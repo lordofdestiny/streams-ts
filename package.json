@@ -7,20 +7,21 @@
   "license": "MIT",
   "description": "Streams library for TS",
   "scripts": {
-    "prepublish": "npm run build",
+    "prepack": "npm run build",
     "build": "tsc --build tsconfig.build.json && tsc-alias",
     "build:watch": "concurrently --kill-others \"tsc --build tsconfig.build.json --watch\" \"tsc-alias -w\"",
     "test": "jest",
+    "test:ci": "jest --ci",
     "test:watch": "jest --watch",
     "coverage": "jest --coverage",
     "coverage:badges": "jest --ci --coverage",
     "docs": "typedoc",
     "docs:open": "typedoc && open-cli ./docs/index.html",
     "docs:watch": "concurrently \"typedoc --watch\" \"open-cli ./docs/index.html\"",
+    "clean": "ts-node scripts/clean.ts dist coverage docs",
     "clean:dist": "ts-node scripts/clean.ts dist",
-    "clean:coverage": "ts-node scripts/clean.ts coverage",
     "clean:docs": "ts-node scripts/clean.ts docs",
-    "clean": "ts-node scripts/clean.ts dist coverage docs"
+    "clean:coverage": "ts-node scripts/clean.ts coverage"
   },
   "keywords": [
     "typescript",
