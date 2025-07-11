@@ -9,5 +9,5 @@ tsconfig.*
 typedoc.json
 jest.config.js
 *.tgz
-!scripts/preinstall.js
 .npmrc
+.prettierrc
