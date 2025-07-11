@@ -2,7 +2,7 @@ name: Publish to GitHub Package Registry
 
 on:
   release:
-    types: [ created ]
+    types: [ released ]
 
 permissions:
   packages: read
@@ -10,15 +10,7 @@ permissions:
 
 jobs:
   build-and-test:
-    name: Run Jest Unit Tests
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - run: npm ci
-      - run: npm test
+    uses: ./.github/workflows/build-and-test.yml
 
   publish-npm:
 
