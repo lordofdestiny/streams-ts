@@ -28,7 +28,7 @@ jobs:
   
   coverage:
     environment: coverage
-    name: Test coverage
+    name: Test coverage exceeds minimum value
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -38,6 +38,7 @@ jobs:
       - run: npm ci
       - run: npm run coverage
       - run: export '$(node ./scripts/extract-coverage.js)'
+      - run: "echo Minimum required coverage: ${{ env.COVERAGE_RESULT_MIN }}"
       - run: test $COVERAGE_RESULT -ge ${{ env.COVERAGE_RESULT_MIN }}
 
 
