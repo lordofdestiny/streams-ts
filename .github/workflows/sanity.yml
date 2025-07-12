@@ -38,5 +38,5 @@ jobs:
       - run: npm ci
       - run: npm run coverage
       - run: export "$(node ./scripts/extract-coverage.js)"
-      - run: "echo Minimum required coverage: ${{ env.COVERAGE_VALUE_MIN }}"
-      - run: test $COVERAGE_VALUE -ge ${{ env.COVERAGE_VALUE_MIN }}
+      - run: "echo Minimum required coverage: ${{ vars.COVERAGE_VALUE_MIN }}"
+      - run: test $COVERAGE_VALUE -ge ${{ vars.COVERAGE_VALUE_MIN }}
