@@ -1,4 +1,4 @@
-import { ArgCountError, ArgTypeError, ArgValueError } from "~/errors";
+import { ArgCountError, ArgTypeError, ArgValueError } from "./errors";
 import {
     chunk,
     enumerate,
@@ -15,12 +15,14 @@ import {
     take,
     takeWhile,
     zip,
-} from "~/generators";
-import { Sequencer } from "~/sequencer";
-import type { BiFunction, BiOperator, Comparator, Consumer, Function, Predicate, UnaryOperator, } from "~/types";
+} from "./generators";
+import { Sequencer } from "./sequencer";
+import type { BiFunction, BiOperator, Comparator, Consumer, Function, Predicate, UnaryOperator, } from "./types";
 import { isIterable } from "~/util";
 
-/** A Stream is a sequence of values that can be manipulated using a variety of methods. Streams are
+
+/** 
+ * A Stream is a sequence of values that can be manipulated using a variety of methods. Streams are
  * created from iterables, arrays, or using the `range`, `repeat` and other factory methods.
  * Streams are lazy, meaning that they do not evaluate their elements until they are consumed by a
  * method that requires it, so-called terminal operations.

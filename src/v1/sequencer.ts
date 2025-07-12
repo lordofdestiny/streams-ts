@@ -15,7 +15,7 @@ export class Sequencer<T> implements Iterable<T> {
         this.source = iterable;
     }
 
-    * [Symbol.iterator](): Iterator<T> {
+    *[Symbol.iterator](): Iterator<T> {
         yield* this.source;
     }
 }

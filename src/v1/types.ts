@@ -98,4 +98,4 @@ export type UnaryOperator<T> = Function<T, T>;
  * }
  * ```
  * */
-export type RestArguments<T> = { [I in keyof T]: Iterable<T[I]> }
+export type RestArguments<T> = { [I in keyof T]: Iterable<T[I]> };
