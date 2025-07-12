@@ -774,7 +774,7 @@ export class Stream<T> extends Sequencer<T> {
      * 
      * @remarks
      * 
-     * This is a stream transformation operation. It the stream is infinite, 
+     * This is a stream transformation operation. If the stream is infinite, 
      * the resulting stream is also infinite. 
      * 
      * @group Transformers
