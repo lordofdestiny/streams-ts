@@ -1,5 +1,5 @@
-import { ArgCountError, ArgTypeError, ArgValueError } from "~/errors";
-import { Stream } from "~/index";
+import { Stream, errors } from "~/index";
+const { ArgCountError, ArgTypeError, ArgValueError } = errors;
 
 describe("Stream.map()", () => {
 
