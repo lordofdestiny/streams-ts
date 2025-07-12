@@ -1,4 +1,4 @@
-name: Run tests
+name: Run PR sanity
 
 on:
   pull_request:
