@@ -1,0 +1,28 @@
+name: Run tests
+
+on:
+  pull_request:
+    types: [labeled, opened, synchronize, reopened]
+    paths:
+      - 'src/**.ts'
+      - 'tsconfig*.json'
+      - 'test/**.spec.ts'
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  run-tests:
+    environment: pr-sanity
+    name: Run Jest Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - run: npm run test:ci
+

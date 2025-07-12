@@ -1,6 +1,6 @@
 .idea/
 scripts/
-__tests__/
+test/
 coverage/
 docs/
 .github/
@@ -9,5 +9,5 @@ tsconfig.*
 typedoc.json
 jest.config.js
 *.tgz
-!scripts/preinstall.js
 .npmrc
+.prettierrc
