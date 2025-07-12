@@ -1,4 +1,4 @@
-import {ArgCountError, ArgTypeError, ArgValueError} from "~/errors";
+import { ArgCountError, ArgTypeError, ArgValueError } from "~/errors";
 import {
     chunk,
     enumerate,
@@ -6,6 +6,7 @@ import {
     flatten,
     iterate,
     map,
+    scan,
     rangeStartStopStep,
     rangeZeroToN,
     repeat,
@@ -15,9 +16,9 @@ import {
     takeWhile,
     zip,
 } from "~/generators";
-import {Sequencer} from "~/sequencer";
-import type {BiFunction, BiOperator, Comparator, Consumer, Function, Predicate, UnaryOperator,} from "~/types";
-import {isIterable} from "~/util";
+import { Sequencer } from "~/sequencer";
+import type { BiFunction, BiOperator, Comparator, Consumer, Function, Predicate, UnaryOperator, } from "~/types";
+import { isIterable } from "~/util";
 
 /** A Stream is a sequence of values that can be manipulated using a variety of methods. Streams are
  * created from iterables, arrays, or using the `range`, `repeat` and other factory methods.
@@ -756,6 +757,59 @@ export class Stream<T> extends Sequencer<T> {
     }
 
     /**
+     * Transforms a stream by scanning through the it with initial value, and making
+     * elements of the resulting stream results of applying fn to the accumulator and 
+     * the current element
+     * 
+     * @typeParam U The type of the elements of the output stream
+     * 
+     * @param initial The initial value of the accumulator
+     * @param fn The function to apply to accumulator and current element to produce the next one
+     * 
+     * @returns The new stream
+     * 
+     * @throws
+     * - {@link ArgCountError} if the number of arguments is not 2
+     * - {@link ArgTypeError} if `fn` is not a function
+     * 
+     * @remarks
+     * 
+     * This is a stream transformation operation. If the stream is infinite, 
+     * the resulting stream is also infinite. 
+     * 
+     * @group Transformers
+     * 
+     * @example Sums of integers starting at 0
+     * ```ts
+     * const sums = Stream.range(1, 6).scan(0, (acc, elem) => acc + elem).toArray();
+     * console.log(sums); // [0, 1, 3, 6, 10, 15]
+     * ```
+     * 
+     * @example First n factorials
+     * ```ts
+     * const n = 10;
+     * const data = Stream.range(1, n + 1)
+     *      .scan(1, (acc, x) => acc * x)
+     *      .skip(1)
+     *      .toArray();
+     * console.log(JSON.stringify(data)); // [ 1, 2, 6, 24, 120 ]
+     * ```
+     * @see
+     * - Similar operations
+     *   - {@link Stream.fold} Similar to scan, but will only a single value. Semantically equivalent to `scan(0, fn).last()`.
+     * 
+     */
+    public scan<U>(initial: U, fn: BiFunction<U, T, U>) {
+        if (arguments.length !== 2) {
+            throw new ArgCountError(this.scan, arguments.length);
+        }
+        if (typeof fn !== "function") {
+            throw new ArgTypeError("fn must be a function", this.scan);
+        }
+        return new Stream(new Sequencer(scan(initial, this, fn)));
+    }
+
+    /**
      * Flattens a Stream of iterables into a single Stream.
      * This is useful for flattening a Stream of Streams, or a Stream of arrays.
      * The resulting Stream will contain all the elements of the original Stream of iterables.
@@ -983,8 +1037,8 @@ export class Stream<T> extends Sequencer<T> {
         const iterator1 = this.sequencer[Symbol.iterator]();
         const iterator2 = other.sequencer[Symbol.iterator]();
         while (true) {
-            const {value: x1, done: done1} = iterator1.next();
-            const {value: x2, done: done2} = iterator2.next();
+            const { value: x1, done: done1 } = iterator1.next();
+            const { value: x2, done: done2 } = iterator2.next();
             if (done1 && done2) return 0;
             if (done1) return -1;
             if (done2) return 1;
@@ -1369,13 +1423,13 @@ export class Stream<T> extends Sequencer<T> {
         }
 
         const iterator = this.sequencer[Symbol.iterator]();
-        let {value, done} = iterator.next();
+        let { value, done } = iterator.next();
         if (done) return true;
         let prev = value;
 
         /* if (reverse) while(true) { ... } */
         while (reverse) {
-            ({value, done} = iterator.next());
+            ({ value, done } = iterator.next());
             if (done) return true;
             if (prev < value) return false;
             prev = value;
@@ -1383,7 +1437,7 @@ export class Stream<T> extends Sequencer<T> {
 
         /* if (!reverse) while(true) { ... } */
         while (true) {
-            ({value, done} = iterator.next());
+            ({ value, done } = iterator.next());
             if (done) return true;
             if (prev > value) return false;
             prev = value;
@@ -1425,13 +1479,13 @@ export class Stream<T> extends Sequencer<T> {
         }
 
         const iterator = this.sequencer[Symbol.iterator]();
-        let {value, done} = iterator.next();
+        let { value, done } = iterator.next();
         if (done) return true;
         let prev = value;
 
         /* if (reverse) while(true) { ... } */
         while (reverse) {
-            ({value, done} = iterator.next());
+            ({ value, done } = iterator.next());
             if (done) return true;
             if (fn(prev, value) < 0) return false;
             prev = value;
@@ -1439,7 +1493,7 @@ export class Stream<T> extends Sequencer<T> {
 
         /* if (!reverse) while(true) {...} */
         while (true) {
-            ({value, done} = iterator.next());
+            ({ value, done } = iterator.next());
             if (done) return true;
             if (fn(prev, value) > 0) return false;
             prev = value;
@@ -1482,7 +1536,7 @@ export class Stream<T> extends Sequencer<T> {
         if (!isIterable(iterable)) {
             throw new ArgTypeError("iterable must be an iterable", this.chain);
         }
-        const {sequencer} = this;
+        const { sequencer } = this;
         return new Stream(
             new Sequencer(
                 (function* chain() {
@@ -1541,13 +1595,13 @@ export class Stream<T> extends Sequencer<T> {
         }
 
         const iterator = this.sequencer[Symbol.iterator]();
-        const {value, done} = iterator.next();
+        const { value, done } = iterator.next();
         if (done) return undefined;
 
         let acc = value;
 
         while (true) {
-            let {value, done} = iterator.next();
+            let { value, done } = iterator.next();
             if (done) return acc;
             acc = fn(acc, value);
         }
@@ -1838,7 +1892,7 @@ export class Stream<T> extends Sequencer<T> {
         }
         const iterator = this.sequencer[Symbol.iterator]();
         while (true) {
-            const {value, done} = iterator.next();
+            const { value, done } = iterator.next();
             if (done) return true;
             if (!value) return false;
         }
@@ -1889,7 +1943,7 @@ export class Stream<T> extends Sequencer<T> {
         }
         const iterator = this.sequencer[Symbol.iterator]();
         while (true) {
-            const {value, done} = iterator.next();
+            const { value, done } = iterator.next();
             if (done) return true;
             if (!fn(value)) return false;
         }
@@ -1933,7 +1987,7 @@ export class Stream<T> extends Sequencer<T> {
         }
         const iterator = this.sequencer[Symbol.iterator]();
         while (true) {
-            const {value, done} = iterator.next();
+            const { value, done } = iterator.next();
             if (done) return false;
             if (value) return true;
         }
@@ -1983,7 +2037,7 @@ export class Stream<T> extends Sequencer<T> {
         }
         const iterator = this.sequencer[Symbol.iterator]();
         while (true) {
-            const {value, done} = iterator.next();
+            const { value, done } = iterator.next();
             if (done) return false;
             if (fn(value)) return true;
         }

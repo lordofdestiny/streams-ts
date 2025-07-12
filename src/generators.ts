@@ -1,4 +1,4 @@
-import {type Function, type Predicate, RestArguments, UnaryOperator} from './types';
+import { type Function, type BiFunction, type Predicate, RestArguments, UnaryOperator } from './types';
 
 /**
  * @internal
@@ -225,6 +225,30 @@ export function* filter<T>(iterable: Iterable<T>, predicate: Predicate<T>): Gene
 /**
  * @internal
  *
+ * Create a new generator that yields elements that are the result of "scanning" previous elements
+ *
+ * @typeParam T The element type of the input iterable
+ * @typeParam U The element type of the output iterable
+ *
+ * @param init - Initial value of the scanner
+ * @param iterable - The input iterable
+ * @param func - Combiner of previous value and current element
+ *
+ * @returns A new generator with elements from the input iterable that satisfy the predicate.
+ * */
+export function* scan<T, U>(init: U, iterable: Iterable<T>, func: BiFunction<U, T, U>): Generator<U> {
+    let acc: U = init;
+    for (const x of iterable) {
+        yield acc;
+        acc = func(acc, x);
+    }
+    yield acc;
+}
+
+
+/**
+ * @internal
+ *
  * Creates a new generator that flattens the input iterable.
  * Flattening means that the generator yields elements of the inner iterables, one level deep.
  *
@@ -268,8 +292,8 @@ export function* zip<T extends any[]>(iterables: RestArguments<T>): Generator<T,
     const iterators = iterables.map((iterable) => iterable[Symbol.iterator]());
     while (true) {
         const values = iterators.map((iterator) => iterator.next());
-        if (values.some(({done}) => done)) return;
-        yield values.map(({value}) => value) as T;
+        if (values.some(({ done }) => done)) return;
+        yield values.map(({ value }) => value) as T;
     }
 }
 
