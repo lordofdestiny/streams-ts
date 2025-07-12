@@ -804,7 +804,7 @@ export class Stream<T> extends Sequencer<T> {
             throw new ArgCountError(this.scan, arguments.length);
         }
         if (typeof fn !== "function") {
-            throw new ArgTypeError("fn must be a function", this.fold);
+            throw new ArgTypeError("fn must be a function", this.scan);
         }
         return new Stream(new Sequencer(scan(initial, this, fn)));
     }
