@@ -25,4 +25,21 @@ jobs:
           node-version: 20
       - run: npm ci
       - run: npm run test:ci
+  
+  coverage:
+    environment: coverage
+    name: Test coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - run: npm run coverage
+      - run: export '$(node ./scripts/extract-coverage.js)'
+      - run: test $COVERAGE_RESULT -ge ${{ env.COVERAGE_RESULT_MIN }}
+
+
+    
 
